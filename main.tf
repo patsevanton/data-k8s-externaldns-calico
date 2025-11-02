@@ -21,6 +21,7 @@ resource "yandex_kubernetes_cluster" "zonal_k8s_cluster" {
   service_account_id      = yandex_iam_service_account.sa-k8s-admin.id
   node_service_account_id = yandex_iam_service_account.sa-k8s-admin.id
   release_channel         = "STABLE"
+  network_policy_provider = "CALICO"
   // to keep permissions of service account on destroy
   // until cluster will be destroyed
   depends_on = [yandex_resourcemanager_folder_iam_member.sa-k8s-admin-permissions]
