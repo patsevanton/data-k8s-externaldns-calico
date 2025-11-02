@@ -1,5 +1,5 @@
 resource "yandex_kubernetes_cluster" "calico" {
-  name        = "k8s-cluster"
+  name        = "calico"
   network_id  = yandex_vpc_network.k8s-network.id
 
   master {
@@ -24,7 +24,7 @@ resource "yandex_kubernetes_cluster" "calico" {
 
 resource "yandex_kubernetes_node_group" "k8s_node_group" {
   cluster_id  = yandex_kubernetes_cluster.calico.id
-  name        = "node-group-1"
+  name        = "node-group-calico"
   version     = "1.31"
 
   instance_template {
@@ -36,8 +36,8 @@ resource "yandex_kubernetes_node_group" "k8s_node_group" {
     }
 
     resources {
-      cores         = 2
-      memory        = 8
+      cores  = 2
+      memory = 8
     }
 
     boot_disk {

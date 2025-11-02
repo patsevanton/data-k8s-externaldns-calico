@@ -1,5 +1,5 @@
 resource "yandex_kubernetes_cluster" "cilium" {
-  name        = "k8s-cluster-cilium"
+  name        = "cilium"
   network_id  = yandex_vpc_network.k8s-network.id
 
   master {
@@ -47,6 +47,7 @@ resource "yandex_kubernetes_node_group" "k8s_node_group_cilium" {
     metadata = {
       ssh-keys = "ubuntu:${file("~/.ssh/id_rsa.pub")}"
     }
+
   }
 
   scale_policy {
