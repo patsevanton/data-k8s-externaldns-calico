@@ -1,0 +1,27 @@
+apiVersion: redis.redis.opstreelabs.in/v1beta2
+kind: Redis
+metadata:
+  name: redis-standalone
+  namespace: ot-operators
+spec:
+  kubernetesConfig:
+    image: quay.io/opstree/redis:v7.0.12
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    service:
+      serviceType: ClusterIP
+  redisExporter:
+    enabled: true
+  storage:
+    volumeClaimTemplate:
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests:
+            storage: 1Gi
+  redisConfig:
+    additionalRedisConfig: |
+      maxmemory 256mb
+      maxmemory-policy allkeys-lru
