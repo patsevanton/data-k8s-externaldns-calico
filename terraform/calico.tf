@@ -4,7 +4,7 @@ locals {
   folder_id = coalesce(var.folder_id, data.yandex_client_config.client.folder_id)
 }
 
-resource "yandex_kubernetes_cluster" "main" {
+resource "yandex_kubernetes_cluster" "calico" {
   name        = "k8s-cluster"
   network_id  = yandex_vpc_network.k8s-network.id
 
@@ -29,7 +29,7 @@ resource "yandex_kubernetes_cluster" "main" {
 # yandex_kubernetes_node_group
 
 resource "yandex_kubernetes_node_group" "k8s_node_group" {
-  cluster_id  = yandex_kubernetes_cluster.main.id
+  cluster_id  = yandex_kubernetes_cluster.calico.id
   name        = "node-group-1"
   version     = "1.31"
 
