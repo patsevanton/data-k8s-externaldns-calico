@@ -5,8 +5,7 @@ locals {
 }
 
 resource "yandex_kubernetes_cluster" "main" {
-  name        = "my-cluster"
-  description = "my-cluster description"
+  name        = "k8s-cluster"
   network_id  = yandex_vpc_network.k8s-network.id
 
   master {
@@ -31,13 +30,8 @@ resource "yandex_kubernetes_cluster" "main" {
 
 resource "yandex_kubernetes_node_group" "k8s_node_group" {
   cluster_id  = yandex_kubernetes_cluster.main.id
-  name        = "name"
-  description = "description"
+  name        = "node-group-1"
   version     = "1.31"
-
-  labels = {
-    "key" = "value"
-  }
 
   instance_template {
     platform_id = "standard-v3"
@@ -49,17 +43,12 @@ resource "yandex_kubernetes_node_group" "k8s_node_group" {
 
     resources {
       cores         = 2
-      memory        = 2
-      core_fraction = 50
+      memory        = 8
     }
 
     boot_disk {
-      type = "network-hdd"
-      size = 32
-    }
-
-    scheduling_policy {
-      preemptible = true
+      type = "network-ssd"
+      size = 65
     }
 
     metadata = {
