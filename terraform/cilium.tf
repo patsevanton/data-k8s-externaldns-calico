@@ -1,5 +1,5 @@
-resource "yandex_kubernetes_cluster" "calico" {
-  name        = "k8s-cluster"
+resource "yandex_kubernetes_cluster" "cilium" {
+  name        = "k8s-cluster-cilium"
   network_id  = yandex_vpc_network.k8s-network.id
 
   master {
@@ -15,16 +15,15 @@ resource "yandex_kubernetes_cluster" "calico" {
   node_service_account_id = yandex_iam_service_account.sa-k8s-admin.id
   release_channel         = "STABLE"
   network_policy_provider = "CALICO"
-  // to keep permissions of service account on destroy
-  // until cluster will be destroyed
+  cluster_ipv4_range      = "10.113.0.0/16"
+  service_ipv4_range      = "10.97.0.0/16"
+
   depends_on = [yandex_resourcemanager_folder_iam_member.sa-k8s-admin-permissions]
 }
 
-# yandex_kubernetes_node_group
-
-resource "yandex_kubernetes_node_group" "k8s_node_group" {
-  cluster_id  = yandex_kubernetes_cluster.calico.id
-  name        = "node-group-1"
+resource "yandex_kubernetes_node_group" "k8s_node_group_cilium" {
+  cluster_id  = yandex_kubernetes_cluster.cilium.id
+  name        = "node-group-cilium"
   version     = "1.31"
 
   instance_template {
@@ -36,8 +35,8 @@ resource "yandex_kubernetes_node_group" "k8s_node_group" {
     }
 
     resources {
-      cores         = 2
-      memory        = 8
+      cores  = 2
+      memory = 8
     }
 
     boot_disk {
@@ -48,7 +47,6 @@ resource "yandex_kubernetes_node_group" "k8s_node_group" {
     metadata = {
       ssh-keys = "ubuntu:${file("~/.ssh/id_rsa.pub")}"
     }
-
   }
 
   scale_policy {
