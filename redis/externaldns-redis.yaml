@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-standalone-externaldns
+  namespace: redis-standalone
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: redis.data.k8s.mycompany.corp
+spec:
+  selector:
+    app: redis-standalone
+  ports:
+  - name: redis
+    port: 6379
+    targetPort: 6379
+  type: ClusterIP
