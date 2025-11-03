@@ -18,3 +18,8 @@ output "dns_manager_service_account_key" {
   value       = jsonencode(yandex_iam_service_account_key.sa-dns-manager-key)
   sensitive = true
 }
+
+output "folder_id" {
+  description = "ID of the folder where the resources will be created"
+  value       = coalesce(var.folder_id, data.yandex_client_config.client.folder_id)
+}

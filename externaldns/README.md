@@ -10,13 +10,29 @@ helm show values external-dns/external-dns > values.yaml
 ```
 
 ```
-helm upgrade --install external-dns external-dns/external-dns ---wait -version 1.19.0
+kubectl create namespace external-dns
 ```
 
-получаем key.json
+получаем key.json в директории terraform
 ```
-cd terraform
 terraform output -raw dns_manager_service_account_key | python3 -m json.tool | grep -v description | grep -v encrypted_private_key | grep -v format | grep -v key_fingerprint | grep -v pgp_key > key.json
 ```
 
-kubectl create secret generic yandexconfig --namespace external-dns --from-file=terraform/key.json
+в директории terraform
+```
+kubectl create secret generic yandexconfig --namespace external-dns --from-file=key.json
+```
+
+
+```
+helm upgrade --install external-dns external-dns/external-dns --namespace external-dns --create-namespace ---wait --version 1.19.0
+```
+
+получаем folder_id в директории terraform
+```
+folder_id=$(terraform output -raw folder_id)
+```
+
+```
+helm upgrade --install external-dns external-dns/external-dns --namespace external-dns --create-namespace -f externaldns/values.yaml --wait --version 1.19.0 --set provider.webhook.args="{--folder-id=$folder_id,--auth-key-file=/etc/kubernetes/key.json}"
+```

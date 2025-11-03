@@ -1,0 +1,39 @@
+provider:
+  name: webhook
+  webhook:
+    image:
+      repository: ghcr.io/ismailbaskin/external-dns-yandex-webhook
+      tag: 1.0.0
+    args:
+      - --auth-key-file=/etc/kubernetes/key.json
+    extraVolumeMounts:
+      - name: yandexconfig
+        mountPath: /etc/kubernetes/
+    resources: {}
+    securityContext:
+      runAsUser: 1000
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: http-webhook
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 2
+      successThreshold: 1
+    readinessProbe:
+      httpGet:
+        path: /healthz
+        port: http-webhook
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 6
+      successThreshold: 1
+    service:
+      port: 8080
+    serviceMonitor: {}
+extraVolumes:
+  - name: yandexconfig
+    secret:
+      secretName: yandexconfig
