@@ -10,14 +10,11 @@ helm repo add ot-helm https://ot-container-kit.github.io/helm-charts/
 ### Установка Redis оператора
 ```bash
 helm upgrade redis-operator ot-helm/redis-operator \
-  --install --create-namespace --namespace ot-operators
+  --install --create-namespace --namespace ot-operators --version 0.22.2
 ```
 
 ### Проверка установки оператора
 ```bash
-# Проверить статус оператора
-kubectl get pods -n ot-operators -l app.kubernetes.io/name=redis-operator
-
 # Проверить установленные CRDs
 kubectl get crds | grep redis.opstreelabs.in
 ```
@@ -29,7 +26,7 @@ kubectl get crds | grep redis.opstreelabs.in
 
 ### Применение манифеста
 ```bash
-kubectl apply -f redis-standalone.yaml
+kubectl apply -f redis-cluster.yaml
 ```
 
 ### Проверка работы Redis
