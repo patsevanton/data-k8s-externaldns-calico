@@ -23,11 +23,6 @@ terraform output -raw dns_manager_service_account_key | python3 -m json.tool | g
 kubectl create secret generic yandexconfig --namespace external-dns --from-file=key.json
 ```
 
-
-```
-helm upgrade --install external-dns external-dns/external-dns --namespace external-dns --create-namespace ---wait --version 1.19.0
-```
-
 получаем folder_id в директории terraform
 ```
 folder_id=$(terraform output -raw folder_id)

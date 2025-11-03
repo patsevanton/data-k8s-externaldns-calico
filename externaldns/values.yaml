@@ -1,3 +1,4 @@
+logLevel: debug  # @schema enum:[panic, debug, info, warning, error, fatal]; type:string; default: "info"
 provider:
   name: webhook
   webhook:
