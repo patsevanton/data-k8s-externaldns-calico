@@ -10,7 +10,7 @@ helm repo add ot-helm https://ot-container-kit.github.io/helm-charts/
 ### Установка Redis оператора
 ```bash
 helm upgrade redis-operator ot-helm/redis-operator \
-  --install --create-namespace --namespace ot-operators --version 0.22.2
+  --install --create-namespace --namespace ot-operators --wait --version 0.22.2
 ```
 
 ### Проверка установки оператора
