@@ -24,19 +24,24 @@ kubectl get crds | grep redis.opstreelabs.in
 ### Использование готового манифеста
 В текущей директории доступен готовый файл [`redis-standalone.yaml`](redis-standalone.yaml:1):
 
-### Применение манифеста
-```bash
-kubectl apply -f redis-cluster.yaml
-```
-
 # Проверить поды Redis оператора
 ```bash
 kubectl get pods -n ot-operators | grep redis
 ```
 
+### Применение манифеста
+```bash
+kubectl apply -f redis-cluster.yaml
+```
+
+# Проверить поды Redis
+```bash
+kubectl get pods -n redis-cluster
+```
+
+
 # Записываю 10 ключей
 ```bash
-# Создаем скрипт и выполняем все команды за один раз
 kubectl run redis-client --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
 redis-cli -c -h redis-cluster-leader.redis-cluster -p 6379 SET key1 'value1' &&
 redis-cli -c -h redis-cluster-leader.redis-cluster -p 6379 SET key2 'value2' &&
