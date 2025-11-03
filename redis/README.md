@@ -71,10 +71,8 @@ kubectl exec -it redis-cluster-follower-1 -n redis-cluster -- redis-cli -c KEYS 
 kubectl exec -it redis-cluster-follower-2 -n redis-cluster -- redis-cli -c KEYS "*"
 ```
 
-Узнать распределение слотов
 # Посмотреть распределение слотов в кластере
 ```bash
-# Однострочная команда с автоматическим удалением pod после выполнения
 kubectl run -i --rm --tty redis-client --image=redis --restart=Never --namespace redis-cluster -- redis-cli -h redis-cluster-leader.redis-cluster.svc.cluster.local -p 6379 CLUSTER SLOTS
 ```
 
