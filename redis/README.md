@@ -45,27 +45,3 @@ kubectl run -it --rm redis-cli --image=redis --restart=Never -- \
   redis-cli -h redis-standalone -p 6379 ping
 ```
 
-## Дополнительные настройки
-
-### Установка с вебхуками и TLS
-```bash
-helm upgrade redis-operator ot-helm/redis-operator \
-  --set redisOperator.webhook=true \
-  --set certmanager.enabled=true \
-  --install --create-namespace --namespace ot-operators
-```
-
-### Установка с кастомным образом Redis
-```bash
-helm upgrade redis-operator ot-helm/redis-operator \
-  --set redisOperator.image.repository=quay.io/opstree/redis-operator \
-  --set redisOperator.image.tag=v0.14.0 \
-  --install --create-namespace --namespace ot-operators
-```
-
-## Примечания
-
-- Оператор поддерживает Redis версии 6.x и выше
-- Минимальные требования: 100m CPU и 128Mi памяти
-- Для production рекомендуется включить persistence
-- Redis Exporter включен по умолчанию для сбора метрик
