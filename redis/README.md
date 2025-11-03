@@ -29,27 +29,65 @@ kubectl get crds | grep redis.opstreelabs.in
 kubectl apply -f redis-cluster.yaml
 ```
 
-### Проверка работы Redis
-```bash
-# Проверить статус Redis
-kubectl get redis -n ot-operators
-
 # Проверить поды Redis
+```bash
 kubectl get pods -n ot-operators | grep redis
-
-# Проверить сервисы
-kubectl get svc -n ot-operators | grep redis
-
-# Записываю 10 ключей
-kubectl exec -it redis-client -- redis-cli -h redis-cluster-leader -p 6379 SET key1 "value1"
-kubectl exec -it redis-client -- redis-cli -h redis-cluster-leader -p 6379 SET key2 "value2"
-kubectl exec -it redis-client -- redis-cli -h redis-cluster-leader -p 6379 SET key3 "value3"
-kubectl exec -it redis-client -- redis-cli -h redis-cluster-leader -p 6379 SET key4 "value4"
-kubectl exec -it redis-client -- redis-cli -h redis-cluster-leader -p 6379 SET key5 "value5"
-kubectl exec -it redis-client -- redis-cli -h redis-cluster-leader -p 6379 SET key6 "value6"
-kubectl exec -it redis-client -- redis-cli -h redis-cluster-leader -p 6379 SET key7 "value7"
-kubectl exec -it redis-client -- redis-cli -h redis-cluster-leader -p 6379 SET key8 "value8"
-kubectl exec -it redis-client -- redis-cli -h redis-cluster-leader -p 6379 SET key9 "value9"
-kubectl exec -it redis-client -- redis-cli -h redis-cluster-leader -p 6379 SET key10 "value10"
 ```
 
+# Записываю 10 ключей
+```bash
+# Создаем скрипт и выполняем все команды за один раз
+kubectl run redis-client --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
+redis-cli -c -h redis-cluster-leader.redis-cluster -p 6379 SET key1 'value1' &&
+redis-cli -c -h redis-cluster-leader.redis-cluster -p 6379 SET key2 'value2' &&
+redis-cli -c -h redis-cluster-leader.redis-cluster -p 6379 SET key3 'value3' &&
+redis-cli -c -h redis-cluster-leader.redis-cluster -p 6379 SET key4 'value4' &&
+redis-cli -c -h redis-cluster-leader.redis-cluster -p 6379 SET key5 'value5' &&
+redis-cli -c -h redis-cluster-leader.redis-cluster -p 6379 SET key6 'value6' &&
+redis-cli -c -h redis-cluster-leader.redis-cluster -p 6379 SET key7 'value7' &&
+redis-cli -c -h redis-cluster-leader.redis-cluster -p 6379 SET key8 'value8' &&
+redis-cli -c -h redis-cluster-leader.redis-cluster -p 6379 SET key9 'value9' &&
+redis-cli -c -h redis-cluster-leader.redis-cluster -p 6379 SET key10 'value10'
+"
+```
+
+
+Сколько ключей у лидеров
+```bash
+kubectl exec -it redis-cluster-leader-0 -n redis-cluster -- redis-cli -c KEYS "*"
+kubectl exec -it redis-cluster-leader-1 -n redis-cluster -- redis-cli -c KEYS "*"
+kubectl exec -it redis-cluster-leader-2 -n redis-cluster -- redis-cli -c KEYS "*"
+```
+
+Сколько ключей у фолловеров
+```bash
+kubectl exec -it redis-cluster-follower-0 -n redis-cluster -- redis-cli -c KEYS "*"
+kubectl exec -it redis-cluster-follower-1 -n redis-cluster -- redis-cli -c KEYS "*"
+kubectl exec -it redis-cluster-follower-2 -n redis-cluster -- redis-cli -c KEYS "*"
+```
+
+Узнать распределение слотов
+# Посмотреть распределение слотов в кластере
+```bash
+# Однострочная команда с автоматическим удалением pod после выполнения
+kubectl run -i --rm --tty redis-client --image=redis --restart=Never --namespace redis-cluster -- redis-cli -h redis-cluster-leader.redis-cluster.svc.cluster.local -p 6379 CLUSTER SLOTS
+```
+
+# Или получить информацию о кластере
+```bash
+kubectl run -i --rm --tty redis-client --image=redis --restart=Never --namespace redis-cluster -- redis-cli -h redis-cluster-leader.redis-cluster.svc.cluster.local -p 6379 CLUSTER NODES
+```
+
+# Подсчитать количество ключей на каждом узле
+```
+kubectl exec -it -n redis-cluster redis-cluster-leader-0 -- redis-cli -c DBSIZE
+kubectl exec -it -n redis-cluster redis-cluster-leader-1 -- redis-cli -c DBSIZE
+kubectl exec -it -n redis-cluster redis-cluster-leader-2 -- redis-cli -c DBSIZE
+```
+
+# Или использовать SCAN для безопасного перебора
+```
+kubectl exec -it -n redis-cluster redis-cluster-leader-0 -- redis-cli -c SCAN 0 COUNT 1000
+kubectl exec -it -n redis-cluster redis-cluster-leader-1 -- redis-cli -c SCAN 0 COUNT 1000
+kubectl exec -it -n redis-cluster redis-cluster-leader-2 -- redis-cli -c SCAN 0 COUNT 1000
+```
