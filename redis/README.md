@@ -40,8 +40,16 @@ kubectl get pods -n ot-operators | grep redis
 # Проверить сервисы
 kubectl get svc -n ot-operators | grep redis
 
-# Тестирование подключения
-kubectl run -it --rm redis-cli --image=redis --restart=Never -- \
-  redis-cli -h redis-standalone -p 6379 ping
+# Записываю 10 ключей
+kubectl exec -it redis-client -- redis-cli -h redis-cluster-leader -p 6379 SET key1 "value1"
+kubectl exec -it redis-client -- redis-cli -h redis-cluster-leader -p 6379 SET key2 "value2"
+kubectl exec -it redis-client -- redis-cli -h redis-cluster-leader -p 6379 SET key3 "value3"
+kubectl exec -it redis-client -- redis-cli -h redis-cluster-leader -p 6379 SET key4 "value4"
+kubectl exec -it redis-client -- redis-cli -h redis-cluster-leader -p 6379 SET key5 "value5"
+kubectl exec -it redis-client -- redis-cli -h redis-cluster-leader -p 6379 SET key6 "value6"
+kubectl exec -it redis-client -- redis-cli -h redis-cluster-leader -p 6379 SET key7 "value7"
+kubectl exec -it redis-client -- redis-cli -h redis-cluster-leader -p 6379 SET key8 "value8"
+kubectl exec -it redis-client -- redis-cli -h redis-cluster-leader -p 6379 SET key9 "value9"
+kubectl exec -it redis-client -- redis-cli -h redis-cluster-leader -p 6379 SET key10 "value10"
 ```
 
