@@ -27,36 +27,6 @@ kubectl get crds | grep redis.opstreelabs.in
 ### Использование готового манифеста
 В текущей директории доступен готовый файл [`redis-standalone.yaml`](redis-standalone.yaml:1):
 
-```yaml
-apiVersion: redis.redis.opstreelabs.in/v1beta2
-kind: Redis
-metadata:
-  name: redis-standalone
-  namespace: ot-operators
-spec:
-  kubernetesConfig:
-    image: quay.io/opstree/redis:v7.0.12
-    imagePullPolicy: IfNotPresent
-    resources:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-      limits:
-        cpu: 100m
-        memory: 128Mi
-  redisExporter:
-    enabled: true
-    image: quay.io/opstree/redis-exporter:v1.44.0
-  storage:
-    volumeClaimTemplate:
-      spec:
-        storageClassName: standard
-        accessModes: [ReadWriteOnce]
-        resources:
-          requests:
-            storage: 1Gi
-```
-
 ### Применение манифеста
 ```bash
 kubectl apply -f redis-standalone.yaml
