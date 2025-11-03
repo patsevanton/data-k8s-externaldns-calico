@@ -29,7 +29,7 @@ kubectl get crds | grep redis.opstreelabs.in
 kubectl apply -f redis-cluster.yaml
 ```
 
-# Проверить поды Redis
+# Проверить поды Redis оператора
 ```bash
 kubectl get pods -n ot-operators | grep redis
 ```
