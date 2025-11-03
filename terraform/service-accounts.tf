@@ -19,3 +19,7 @@ resource "yandex_resourcemanager_folder_iam_member" "sa-dns-manager-permissions"
   role      = "dns.editor"
   member    = "serviceAccount:${yandex_iam_service_account.sa-dns-manager.id}"
 }
+
+resource "yandex_iam_service_account_key" "sa-dns-manager-key" {
+  service_account_id = yandex_iam_service_account.sa-dns-manager.id
+}

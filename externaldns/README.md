@@ -19,3 +19,5 @@ yc iam key create iamkey \
   --format=json \
   --output=key.json
 ```
+
+terraform output dns_manager_service_account_key | grep -v description | grep -v encrypted_private_key | grep -v format | grep -v key_fingerprint | grep -v pgp_key > key.json
