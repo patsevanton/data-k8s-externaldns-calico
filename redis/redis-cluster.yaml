@@ -4,7 +4,6 @@ kind: Namespace
 metadata:
   name: redis-standalone
 ---
----
 apiVersion: redis.redis.opstreelabs.in/v1beta2
 kind: RedisCluster
 metadata:
