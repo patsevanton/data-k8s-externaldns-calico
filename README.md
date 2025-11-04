@@ -47,8 +47,6 @@ folder_id=$(terraform output -raw folder_id)
 helm upgrade --install external-dns external-dns/external-dns -f externaldns/values.yaml --wait --version 1.19.0 --set provider.webhook.args="{--folder-id=$folder_id,--auth-key-file=/etc/kubernetes/key.json}"
 ```
 
----
-
 ## Часть 2: Установка Redis оператора и standalone Redis
 
 Был выбран **ot-container-kit/redis-operator**, потому что он предоставляет более широкие возможности по сравнению с **spotahome/redis-operator**: поддерживает все режимы Redis (Standalone, Cluster и Sentinel), а также современные функции, необходимые для безопасной и управляемой эксплуатации — TLS/SSL, ACL, резервное копирование и интеграцию с Grafana для мониторинга. Это делает его более гибким и удобным решением для production-сред, требующих масштабируемости, безопасности и наблюдаемости.
@@ -111,52 +109,54 @@ redis-standalone-additional   ClusterIP   10.96.153.7     <none>        6379/TCP
 redis-standalone-headless     ClusterIP   None            <none>        6379/TCP   4m27s
 ```
 
----
-
-## 3. Тестирование Redis standalone
+## 3. Тестирование внешнего Redis standalone из cilium k8s кластера
 
 ### Подключение к Redis и запись 10 ключей
 
 ```bash
-kubectl run redis-client -n redis-standalone-ns --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
-redis-cli -h redis-standalone -p 6379 SET key1 'value1' &&
-redis-cli -h redis-standalone -p 6379 SET key2 'value2' &&
-redis-cli -h redis-standalone -p 6379 SET key3 'value3' &&
-redis-cli -h redis-standalone -p 6379 SET key4 'value4' &&
-redis-cli -h redis-standalone -p 6379 SET key5 'value5' &&
-redis-cli -h redis-standalone -p 6379 SET key6 'value6' &&
-redis-cli -h redis-standalone -p 6379 SET key7 'value7' &&
-redis-cli -h redis-standalone -p 6379 SET key8 'value8' &&
-redis-cli -h redis-standalone -p 6379 SET key9 'value9' &&
-redis-cli -h redis-standalone -p 6379 SET key10 'value10'
+kubectl run redis-client --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
+redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 SET key1 'value1' &&
+redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 SET key2 'value2' &&
+redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 SET key3 'value3' &&
+redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 SET key4 'value4' &&
+redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 SET key5 'value5' &&
+redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 SET key6 'value6' &&
+redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 SET key7 'value7' &&
+redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 SET key8 'value8' &&
+redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 SET key9 'value9' &&
+redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 SET key10 'value10'
 "
 ```
 
 ### Проверка наличия ключей
 
 ```bash
-kubectl exec -it redis-standalone-0 -n redis-standalone-ns -- redis-cli KEYS "*"
+kubectl run redis-client --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
+redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 KEYS '*'
+"
 ```
 
 ### Проверка количества ключей
 
 ```bash
-kubectl exec -it redis-standalone-0 -n redis-standalone-ns -- redis-cli DBSIZE
+kubectl run redis-client --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
+redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 DBSIZE
+"
 ```
 
 ### Безопасный перебор ключей
 
 ```bash
-kubectl exec -it redis-standalone-0 -n redis-standalone-ns -- redis-cli SCAN 0 COUNT 1000
+kubectl run redis-client --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
+redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 SCAN 0 COUNT 1000
+"
 ```
 
----
-
-## 4. (Необязательно) Проверка через `redis-standalone-additional` сервис
+## 4. (Необязательно) Проверка доступности Redis
 
 ```bash
-kubectl run redis-client -n redis-standalone-ns --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
-redis-cli -h redis-standalone-additional -p 6379 PING
+kubectl run redis-client --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
+redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 PING
 "
 ```
 
