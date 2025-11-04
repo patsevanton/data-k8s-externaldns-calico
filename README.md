@@ -14,11 +14,6 @@ yc managed-kubernetes cluster get-credentials --id id-кластера-k8s --ext
 helm repo add external-dns https://kubernetes-sigs.github.io/external-dns/
 ```
 
-### Получение values.yaml
-```bash
-helm show values external-dns/external-dns > values.yaml
-```
-
 ### Создание service account key
 В директории terraform выполняем:
 ```bash
@@ -45,29 +40,8 @@ helm upgrade --install external-dns external-dns/external-dns -f externaldns/val
 
 ## Часть 2: Установка Redis оператора и standalone Redis
 
-### Сравнение Redis операторов
+Был выбран **ot-container-kit/redis-operator**, потому что он предоставляет более широкие возможности по сравнению с **spotahome/redis-operator**: поддерживает все режимы Redis (Standalone, Cluster и Sentinel), а также современные функции, необходимые для безопасной и управляемой эксплуатации — TLS/SSL, ACL, резервное копирование и интеграцию с Grafana для мониторинга. Это делает его более гибким и удобным решением для production-сред, требующих масштабируемости, безопасности и наблюдаемости.
 
-#### Основные отличия
-
-**spotahome/redis-operator**
-- Только Redis + Sentinel
-- Фокус на стабильность и production-готовность
-- Проверен в production
-
-**ot-container-kit/redis-operator**
-- Поддержка всех режимов Redis (Standalone, Cluster, Sentinel)
-- Современные функции: TLS/SSL, ACL, резервное копирование
-- Расширенный мониторинг с Grafana
-
-#### Ключевые характеристики
-
-| Функция | spotahome | ot-container-kit |
-|---------|-----------|------------------|
-| Архитектура | Redis + Sentinel | Все режимы Redis |
-| TLS/SSL | ❌ | ✅ |
-| ACL управление | ❌ | ✅ |
-| Резервное копирование | ❌ | ✅ |
-| Grafana дашборды | ❌ | ✅ |
 
 ### 1. Установка Redis оператора через Helm (рекомендуемый способ)
 
