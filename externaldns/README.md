@@ -28,8 +28,3 @@ folder_id=$(terraform output -raw folder_id)
 ```
 helm upgrade --install external-dns external-dns/external-dns -f externaldns/values.yaml --wait --version 1.19.0 --set provider.webhook.args="{--folder-id=$folder_id,--auth-key-file=/etc/kubernetes/key.json}"
 ```
-
-Устанавливаем redis-cluster-externaldns
-```
-kubectl apply -f externaldns/externaldns-redis.yaml
-```
