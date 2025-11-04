@@ -4,6 +4,7 @@
 В директории terraform
 ```bash
 terraform apply -auto-approve
+yc managed-kubernetes cluster get-credentials --id id-кластера-k8s --external --force
 ```
 
 ## Часть 1: Установка ExternalDNS для Yandex Cloud
@@ -94,7 +95,7 @@ kubectl get pods -n ot-operators | grep redis
 
 #### Применение манифеста
 ```bash
-kubectl apply -f redis-standalone.yaml
+kubectl apply -f redis-standalone/redis-standalone.yaml
 ```
 
 #### Проверка подов Redis
