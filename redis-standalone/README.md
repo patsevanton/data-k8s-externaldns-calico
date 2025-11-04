@@ -1,8 +1,9 @@
 ## 2. Установка standalone Redis через YAML манифест
 
+
 ### Применение манифеста
 ```bash
-kubectl apply -f redis-cluster.yaml
+kubectl apply -f redis-standalone.yaml
 ```
 
 # Проверить поды Redis

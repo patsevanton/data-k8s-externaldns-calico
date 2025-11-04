@@ -3,6 +3,9 @@ apiVersion: redis.redis.opstreelabs.in/v1beta2
 kind: Redis
 metadata:
   name: redis-standalone
+  annotations:
+    external-dns.alpha.kubernetes.io/internal-hostname: redis.data.k8s.mycompany.corp
+    external-dns.alpha.kubernetes.io/ttl: "60"
 spec:
   # redisConfig:
   #   additionalRedisConfig: redis-external-config
