@@ -1,156 +1,73 @@
 # Сравнительная таблица Redis операторов Kubernetes
 
-## Обзор
+## Краткий обзор
 
-| Характеристика | spotahome/redis-operator | ot-container-kit/redis-operator |
-|----------------|---------------------------|---------------------------------|
-| **Основная архитектура** | Redis + Sentinel (автоматический failover) | Redis Standalone, Cluster, Sentinel |
-| **Поддержка Kubernetes** | 1.21+ (рекомендуется 1.25+) | 1.16+ |
-| **Поддержка Redis** | 6.0+ | 5.0+, 6.0+, 7.0+ |
-| **Лицензия** | Apache 2.0 | Apache 2.0 |
-| **Язык реализации** | Go | Go |
-| **Последняя версия** | v1.3.0 | v0.15.0 |
+Сравниваем два популярных Redis оператора для Kubernetes:
+- **spotahome/redis-operator**: Специализируется на Redis Sentinel с автоматическим failover
+- **ot-container-kit/redis-operator**: Поддерживает все режимы Redis (Standalone, Cluster, Sentinel)
 
-## Функциональные возможности
+Оба оператора используют лицензию Apache 2.0 и реализованы на языке Go.
 
-### Основные функции
+## Основные различия
 
-| Функция | spotahome/redis-operator | ot-container-kit/redis-operator |
-|---------|---------------------------|---------------------------------|
-| Redis Standalone | ❌ | ✅ |
-| Redis Cluster | ❌ | ✅ |
-| Redis Sentinel | ✅ | ✅ |
-| Автоматический failover | ✅ | ✅ |
-| Мониторинг здоровья | ✅ | ✅ |
-| Автоматическое восстановление | ✅ | ✅ |
-| Persistence (PVC) | ✅ | ✅ |
-| Конфигурация через ConfigMap | ✅ | ✅ |
-| TLS/SSL шифрование | ❌ | ✅ |
-| ACL управление | ❌ | ✅ |
-| Резервное копирование/восстановление | ❌ | ✅ |
+### Архитектура и поддержка режимов Redis
+- **spotahome/redis-operator**: Только Redis + Sentinel (автоматический failover)
+- **ot-container-kit/redis-operator**: Поддержка Redis Standalone, Cluster и Sentinel
 
-### Мониторинг и метрики
+### Функциональные возможности
+**ot-container-kit/redis-operator** предлагает больше современных функций:
+- TLS/SSL шифрование
+- ACL управление
+- Резервное копирование/восстановление
+- Grafana дашборды
+- Alertmanager интеграция
 
-| Мониторинг | spotahome/redis-operator | ot-container-kit/redis-operator |
-|------------|---------------------------|---------------------------------|
-| Prometheus метрики | ✅ (порт 9710) | ✅ |
-| Grafana дашборды | ❌ | ✅ |
-| Встроенный экспортер | ✅ (redis_exporter) | ✅ (redis_exporter) |
-| ServiceMonitor | ✅ | ✅ |
-| PodMonitor | ✅ | ✅ |
+**spotahome/redis-operator** фокусируется на стабильности:
+- Отличная поддержка production-готовых функций
+- Более зрелый и проверенный в production
+- Хорошая интеграция с Kubernetes экосистемой
+
+### Мониторинг
+- Оба оператора поддерживают Prometheus метрики и встроенные экспортеры
+- **ot-container-kit/redis-operator** дополнительно предоставляет Grafana дашборды
 
 ### Безопасность
-
-| Безопасность | spotahome/redis-operator | ot-container-kit/redis-operator |
-|--------------|---------------------------|---------------------------------|
-| Аутентификация | ✅ (Redis AUTH) | ✅ |
-| TLS шифрование | ❌ | ✅ |
-| Network Policies | ✅ | ✅ |
-| Pod Security Context | ✅ | ✅ |
-| Security Context | ✅ | ✅ |
-| RBAC интеграция | ✅ | ✅ |
-
-### Управление ресурсами
-
-| Ресурсы | spotahome/redis-operator | ot-container-kit/redis-operator |
-|---------|---------------------------|---------------------------------|
-| Resource limits | ✅ | ✅ |
-| Resource requests | ✅ | ✅ |
-| Affinity/Anti-affinity | ✅ | ✅ |
-| Tolerations | ✅ | ✅ |
-| Node selection | ✅ | ✅ |
-| Priority classes | ✅ | ✅ |
-| Pod Disruption Budget | ✅ | ✅ |
-
-### Развертывание и управление
-
-| Развертывание | spotahome/redis-operator | ot-container-kit/redis-operator |
-|---------------|---------------------------|---------------------------------|
-| Helm chart | ✅ | ✅ |
-| Kustomize | ✅ | ✅ |
-| Raw manifests | ✅ | ✅ |
-| Namespace поддержка | ✅ | ✅ |
-| Multi-tenant | ✅ | ✅ |
-| Миграция данных | ✅ (bootstrap) | ✅ |
-| Масштабирование | ✅ (ручное) | ✅ (авто/ручное) |
+- Оба оператора поддерживают аутентификацию и сетевые политики
+- **ot-container-kit/redis-operator** имеет расширенные функции безопасности (TLS шифрование, ACL управление)
 
 ## Технические характеристики
 
-### Конфигурация Redis
+| Характеристика | spotahome/redis-operator | ot-container-kit/redis-operator |
+|----------------|--------------------------|---------------------------------|
+| Основная архитектура | Redis + Sentinel | Redis Standalone/Cluster/Sentinel |
+| Поддержка Kubernetes | 1.21+ | 1.16+ |
+| Поддержка Redis | 6.0+ | 5.0+, 6.0+, 7.0+ |
+| Последняя версия | v1.3.0 | v0.15.0 |
+| TLS/SSL шифрование | ❌ | ✅ |
+| ACL управление | ❌ | ✅ |
+| Резервное копирование | ❌ | ✅ |
+| Grafana дашборды | ❌ | ✅ |
 
-| Параметр | spotahome/redis-operator | ot-container-kit/redis-operator |
-|----------|---------------------------|---------------------------------|
-| Custom config | ✅ | ✅ |
-| Command renaming | ✅ | ❌ |
-| Экспортер конфигурации | ✅ | ✅ |
-| Переменные окружения | ✅ | ✅ |
-| Пользовательские команды | ✅ | ✅ |
+## Рекомендации по выбору
 
-### Конфигурация Sentinel
-
-| Параметр | spotahome/redis-operator | ot-container-kit/redis-operator |
-|----------|---------------------------|---------------------------------|
-| Quorum настройка | ✅ | ✅ |
-| Таймауты failover | ✅ | ✅ |
-| Кастомная конфигурация | ✅ | ✅ |
-| Мониторинг нескольких мастеров | ❌ | ✅ |
-
-### Хранилище
-
-| Хранилище | spotahome/redis-operator | ot-container-kit/redis-operator |
-|-----------|---------------------------|---------------------------------|
-| PersistentVolumeClaim | ✅ | ✅ |
-| EmptyDir | ✅ | ✅ |
-| Storage классы | ✅ | ✅ |
-| Размер хранилища | Настраиваемый | Настраиваемый |
-| Сохранение при удалении | ✅ (опция) | ✅ |
-
-## Экосистема и интеграции
-
-| Интеграция | spotahome/redis-operator | ot-container-kit/redis-operator |
-|------------|---------------------------|---------------------------------|
-| Prometheus | ✅ | ✅ |
-| Grafana | ❌ | ✅ |
-| Alertmanager | ❌ | ✅ |
-| Custom Resources | ✅ | ✅ |
-| Operator SDK | ❌ | ✅ |
-| Kubebuilder | ✅ | ❌ |
-
-## Статистика проекта
-
-| Метрика | spotahome/redis-operator | ot-container-kit/redis-operator |
-|---------|---------------------------|---------------------------------|
-| GitHub Stars | ~1.2k | ~0.5k |
-| Форков | ~250 | ~100 |
-| Последний коммит | 2023 | 2023 |
-| Активность | Средняя | Средняя |
-| Документация | Хорошая | Хорошая |
-
-## Выводы
-
-**spotahome/redis-operator**:
-- Специализируется на Redis Sentinel с автоматическим failover
-- Отличная поддержка production-готовых функций
-- Хорошая интеграция с Kubernetes экосистемой
-- Более зрелый и проверенный в production
-
-**ot-container-kit/redis-operator**:
-- Поддерживает все режимы Redis (Standalone, Cluster, Sentinel)
-- Более современные функции (TLS, ACL, backup)
-- Лучшая поддержка мониторинга с Grafana
-- Более гибкая архитектура
-
-## Рекомендации
-
-**Выберите spotahome/redis-operator если:**
+### Выберите spotahome/redis-operator если:
 - Нужен проверенный Redis Sentinel с автоматическим failover
 - Требуется production-готовое решение
 - Важна стабильность и надежность
 
-**Выберите ot-container-kit/redis-operator если:**
+### Выберите ot-container-kit/redis-operator если:
 - Нужна поддержка всех режимов Redis
 - Требуются современные функции безопасности (TLS, ACL)
 - Важен комплексный мониторинг с Grafana
 - Нужны функции резервного копирования
 
-Оба оператора являются отличными решениями, но ot-container-kit/redis-operator предлагает больше возможностей благодаря поддержке всех режимов Redis и современных функций безопасности.
+## Статистика проекта
+
+| Метрика | spotahome/redis-operator | ot-container-kit/redis-operator |
+|---------|--------------------------|---------------------------------|
+| GitHub Stars | ~1.2k | ~0.5k |
+| Форков | ~250 | ~100 |
+| Активность | Средняя | Средняя |
+| Документация | Хорошая | Хорошая |
+
+Оба оператора являются отличными решениями, выбор зависит от ваших конкретных требований к функциональности и стабильности.
