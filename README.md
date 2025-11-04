@@ -63,8 +63,7 @@ helm repo add ot-helm https://ot-container-kit.github.io/helm-charts/
 
 #### Установка Redis оператора
 ```bash
-helm upgrade redis-operator ot-helm/redis-operator \
-  --install --create-namespace --namespace ot-operators --wait --version 0.22.2
+helm upgrade redis-operator ot-helm/redis-operator --install --create-namespace --namespace ot-operators --wait --version 0.22.2
 ```
 
 #### Проверка установки оператора
@@ -76,78 +75,98 @@ kubectl get crds | grep redis.opstreelabs.in
 kubectl get pods -n ot-operators | grep redis
 ```
 
-### 2. Установка standalone Redis через YAML манифест
+---
+
+### 2. Установка standalone Redis через YAML-манифест
 
 #### Применение манифеста
+
 ```bash
 kubectl apply -f redis-standalone/redis-standalone.yaml
 ```
 
 #### Проверка подов Redis
+
 ```bash
-kubectl get pods -n redis-cluster
+kubectl get pods -n default
 ```
 
-### 3. Тестирование Redis кластера
+Ожидаемый результат:
 
-#### Запись 10 ключей
-```bash
-kubectl run redis-client --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
-redis-cli -c -h redis-cluster-leader.redis-cluster -p 6379 SET key1 'value1' &&
-redis-cli -c -h redis-cluster-leader.redis-cluster -p 6379 SET key2 'value2' &&
-redis-cli -c -h redis-cluster-leader.redis-cluster -p 6379 SET key3 'value3' &&
-redis-cli -c -h redis-cluster-leader.redis-cluster -p 6379 SET key4 'value4' &&
-redis-cli -c -h redis-cluster-leader.redis-cluster -p 6379 SET key5 'value5' &&
-redis-cli -c -h redis-cluster-leader.redis-cluster -p 6379 SET key6 'value6' &&
-redis-cli -c -h redis-cluster-leader.redis-cluster -p 6379 SET key7 'value7' &&
-redis-cli -c -h redis-cluster-leader.redis-cluster -p 6379 SET key8 'value8' &&
-redis-cli -c -h redis-cluster-leader.redis-cluster -p 6379 SET key9 'value9' &&
-redis-cli -c -h redis-cluster-leader.redis-cluster -p 6379 SET key10 'value10'
-"
+```
+NAME                READY   STATUS    RESTARTS   AGE
+redis-standalone-0  1/1     Running   0          <время>
 ```
 
-#### Проверка распределения ключей
+#### Проверка сервисов Redis
 
-##### Сколько ключей у лидеров
 ```bash
-kubectl exec -it redis-cluster-leader-0 -n redis-cluster -- redis-cli -c KEYS "*"
-kubectl exec -it redis-cluster-leader-1 -n redis-cluster -- redis-cli -c KEYS "*"
-kubectl exec -it redis-cluster-leader-2 -n redis-cluster -- redis-cli -c KEYS "*"
+kubectl get svc -n default
 ```
 
-##### Сколько ключей у фолловеров
-```bash
-kubectl exec -it redis-cluster-follower-0 -n redis-cluster -- redis-cli -c KEYS "*"
-kubectl exec -it redis-cluster-follower-1 -n redis-cluster -- redis-cli -c KEYS "*"
-kubectl exec -it redis-cluster-follower-2 -n redis-cluster -- redis-cli -c KEYS "*"
+Ожидаемый результат:
+
 ```
-
-#### Анализ распределения данных в кластере
-
-##### Посмотреть распределение слотов в кластере
-```bash
-kubectl run -i --rm --tty redis-client --image=redis --restart=Never --namespace redis-cluster -- redis-cli -h redis-cluster-leader.redis-cluster.svc.cluster.local -p 6379 CLUSTER SLOTS
-```
-
-##### Получить информацию о кластере
-```bash
-kubectl run -i --rm --tty redis-client --image=redis --restart=Never --namespace redis-cluster -- redis-cli -h redis-cluster-leader.redis-cluster.svc.cluster.local -p 6379 CLUSTER NODES
-```
-
-##### Подсчитать количество ключей на каждом узле
-```bash
-kubectl exec -it -n redis-cluster redis-cluster-leader-0 -- redis-cli -c DBSIZE
-kubectl exec -it -n redis-cluster redis-cluster-leader-1 -- redis-cli -c DBSIZE
-kubectl exec -it -n redis-cluster redis-cluster-leader-2 -- redis-cli -c DBSIZE
-```
-
-##### Использование SCAN для безопасного перебора ключей
-```bash
-kubectl exec -it -n redis-cluster redis-cluster-leader-0 -- redis-cli -c SCAN 0 COUNT 1000
-kubectl exec -it -n redis-cluster redis-cluster-leader-1 -- redis-cli -c SCAN 0 COUNT 1000
-kubectl exec -it -n redis-cluster redis-cluster-leader-2 -- redis-cli -c SCAN 0 COUNT 1000
+NAME                          TYPE        CLUSTER-IP      PORT(S)
+redis-standalone              ClusterIP   10.96.x.x       6379/TCP
+redis-standalone-additional   ClusterIP   10.96.x.x       6379/TCP
+redis-standalone-headless     ClusterIP   None            6379/TCP
 ```
 
 ---
 
-Эта объединенная инструкция содержит все необходимые шаги для установки и настройки как ExternalDNS для работы с Yandex Cloud, так и Redis оператора с тестированием Redis кластера в Kubernetes.
+### 3. Тестирование Redis standalone
+
+#### Подключение к Redis и запись 10 ключей
+
+```bash
+kubectl run redis-client --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
+redis-cli -h redis-standalone -p 6379 SET key1 'value1' &&
+redis-cli -h redis-standalone -p 6379 SET key2 'value2' &&
+redis-cli -h redis-standalone -p 6379 SET key3 'value3' &&
+redis-cli -h redis-standalone -p 6379 SET key4 'value4' &&
+redis-cli -h redis-standalone -p 6379 SET key5 'value5' &&
+redis-cli -h redis-standalone -p 6379 SET key6 'value6' &&
+redis-cli -h redis-standalone -p 6379 SET key7 'value7' &&
+redis-cli -h redis-standalone -p 6379 SET key8 'value8' &&
+redis-cli -h redis-standalone -p 6379 SET key9 'value9' &&
+redis-cli -h redis-standalone -p 6379 SET key10 'value10'
+"
+```
+
+#### Проверка наличия ключей
+
+```bash
+kubectl exec -it redis-standalone-0 -- redis-cli KEYS "*"
+```
+
+#### Проверка количества ключей
+
+```bash
+kubectl exec -it redis-standalone-0 -- redis-cli DBSIZE
+```
+
+#### Безопасный перебор ключей
+
+```bash
+kubectl exec -it redis-standalone-0 -- redis-cli SCAN 0 COUNT 1000
+```
+
+---
+
+### 4. (Необязательно) Проверка через `redis-standalone-additional` сервис
+
+Если нужно протестировать доступ через дополнительный сервис:
+
+```bash
+kubectl run redis-client --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
+redis-cli -h redis-standalone-additional -p 6379 PING
+"
+```
+
+Ожидаемый ответ:
+
+```
+PONG
+```
+
