@@ -1,4 +1,8 @@
-logLevel: debug  # @schema enum:[panic, debug, info, warning, error, fatal]; type:string; default: "info"
+extraVolumes:
+  - name: yandexconfig
+    secret:
+      secretName: yandexconfig
+logLevel: debug
 provider:
   name: webhook
   webhook:
@@ -10,31 +14,5 @@ provider:
     extraVolumeMounts:
       - name: yandexconfig
         mountPath: /etc/kubernetes/
-    resources: {}
     securityContext:
       runAsUser: 1000
-    livenessProbe:
-      httpGet:
-        path: /healthz
-        port: http-webhook
-      initialDelaySeconds: 10
-      periodSeconds: 10
-      timeoutSeconds: 5
-      failureThreshold: 2
-      successThreshold: 1
-    readinessProbe:
-      httpGet:
-        path: /healthz
-        port: http-webhook
-      initialDelaySeconds: 5
-      periodSeconds: 10
-      timeoutSeconds: 5
-      failureThreshold: 6
-      successThreshold: 1
-    service:
-      port: 8080
-    serviceMonitor: {}
-extraVolumes:
-  - name: yandexconfig
-    secret:
-      secretName: yandexconfig
