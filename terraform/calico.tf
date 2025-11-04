@@ -1,6 +1,6 @@
 resource "yandex_kubernetes_cluster" "calico" {
-  name        = "calico"
-  network_id  = yandex_vpc_network.k8s-network.id
+  name       = "calico"
+  network_id = yandex_vpc_network.k8s-network.id
 
   master {
     version = "1.31"
@@ -8,7 +8,8 @@ resource "yandex_kubernetes_cluster" "calico" {
       zone      = yandex_vpc_subnet.k8s-subnet.zone
       subnet_id = yandex_vpc_subnet.k8s-subnet.id
     }
-    public_ip = true
+    public_ip          = true
+    security_group_ids = [yandex_vpc_security_group.allow-all-sg.id]
   }
 
   service_account_id      = yandex_iam_service_account.sa-k8s-admin.id
@@ -23,9 +24,9 @@ resource "yandex_kubernetes_cluster" "calico" {
 # yandex_kubernetes_node_group
 
 resource "yandex_kubernetes_node_group" "k8s_node_group" {
-  cluster_id  = yandex_kubernetes_cluster.calico.id
-  name        = "node-group-calico"
-  version     = "1.31"
+  cluster_id = yandex_kubernetes_cluster.calico.id
+  name       = "node-group-calico"
+  version    = "1.31"
 
   instance_template {
     platform_id = "standard-v3"

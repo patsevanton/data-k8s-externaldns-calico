@@ -16,7 +16,7 @@ output "dns_manager_service_account_id" {
 output "dns_manager_service_account_key" {
   description = "Key of the service account for DNS management"
   value       = jsonencode(yandex_iam_service_account_key.sa-dns-manager-key)
-  sensitive = true
+  sensitive   = true
 }
 
 output "folder_id" {
