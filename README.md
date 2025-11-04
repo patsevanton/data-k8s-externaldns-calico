@@ -1,5 +1,11 @@
 # Подключение к сервисам в другом k8s кластере Yandex Cloud используя ExternalDNS
 
+## Установка kubernetes
+В директории terraform
+```bash
+terraform apply -auto-approve
+```
+
 ## Часть 1: Установка ExternalDNS для Yandex Cloud
 
 ### Добавление Helm репозитория ExternalDNS
