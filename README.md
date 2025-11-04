@@ -75,52 +75,50 @@ kubectl get crds | grep redis.opstreelabs.in
 kubectl get pods -n ot-operators | grep redis
 ```
 
----
+## 2. Установка standalone Redis через YAML-манифест
 
-### 2. Установка standalone Redis через YAML-манифест
-
-#### Применение манифеста
+### Применение манифеста
 
 ```bash
 kubectl apply -f redis-standalone/redis-standalone.yaml
 ```
 
-#### Проверка подов Redis
+### Проверка подов Redis
 
 ```bash
-kubectl get pods -n default
+kubectl get pods -n redis-standalone-ns
 ```
 
-Ожидаемый результат:
+**Ожидаемый результат:**
 
 ```
-NAME                READY   STATUS    RESTARTS   AGE
-redis-standalone-0  1/1     Running   0          <время>
+NAME                 READY   STATUS    RESTARTS   AGE
+redis-standalone-0   1/1     Running   0          4m23s
 ```
 
-#### Проверка сервисов Redis
+### Проверка сервисов Redis
 
 ```bash
-kubectl get svc -n default
+kubectl get svc -n redis-standalone-ns
 ```
 
-Ожидаемый результат:
+**Ожидаемый результат:**
 
 ```
-NAME                          TYPE        CLUSTER-IP      PORT(S)
-redis-standalone              ClusterIP   10.96.x.x       6379/TCP
-redis-standalone-additional   ClusterIP   10.96.x.x       6379/TCP
-redis-standalone-headless     ClusterIP   None            6379/TCP
+NAME                          TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+redis-standalone              ClusterIP   10.96.155.226   <none>        6379/TCP   4m27s
+redis-standalone-additional   ClusterIP   10.96.153.7     <none>        6379/TCP   4m27s
+redis-standalone-headless     ClusterIP   None            <none>        6379/TCP   4m27s
 ```
 
 ---
 
-### 3. Тестирование Redis standalone
+## 3. Тестирование Redis standalone
 
-#### Подключение к Redis и запись 10 ключей
+### Подключение к Redis и запись 10 ключей
 
 ```bash
-kubectl run redis-client --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
+kubectl run redis-client -n redis-standalone-ns --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
 redis-cli -h redis-standalone -p 6379 SET key1 'value1' &&
 redis-cli -h redis-standalone -p 6379 SET key2 'value2' &&
 redis-cli -h redis-standalone -p 6379 SET key3 'value3' &&
@@ -134,39 +132,36 @@ redis-cli -h redis-standalone -p 6379 SET key10 'value10'
 "
 ```
 
-#### Проверка наличия ключей
+### Проверка наличия ключей
 
 ```bash
-kubectl exec -it redis-standalone-0 -- redis-cli KEYS "*"
+kubectl exec -it redis-standalone-0 -n redis-standalone-ns -- redis-cli KEYS "*"
 ```
 
-#### Проверка количества ключей
+### Проверка количества ключей
 
 ```bash
-kubectl exec -it redis-standalone-0 -- redis-cli DBSIZE
+kubectl exec -it redis-standalone-0 -n redis-standalone-ns -- redis-cli DBSIZE
 ```
 
-#### Безопасный перебор ключей
+### Безопасный перебор ключей
 
 ```bash
-kubectl exec -it redis-standalone-0 -- redis-cli SCAN 0 COUNT 1000
+kubectl exec -it redis-standalone-0 -n redis-standalone-ns -- redis-cli SCAN 0 COUNT 1000
 ```
 
 ---
 
-### 4. (Необязательно) Проверка через `redis-standalone-additional` сервис
-
-Если нужно протестировать доступ через дополнительный сервис:
+## 4. (Необязательно) Проверка через `redis-standalone-additional` сервис
 
 ```bash
-kubectl run redis-client --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
+kubectl run redis-client -n redis-standalone-ns --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
 redis-cli -h redis-standalone-additional -p 6379 PING
 "
 ```
 
-Ожидаемый ответ:
+**Ожидаемый ответ:**
 
 ```
 PONG
 ```
-
