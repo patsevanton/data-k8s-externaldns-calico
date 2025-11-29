@@ -21,7 +21,7 @@ resource "yandex_kubernetes_cluster" "cilium-app" {
   depends_on = [yandex_resourcemanager_folder_iam_member.sa-k8s-admin-permissions]
 }
 
-resource "yandex_kubernetes_node_group" "k8s_node_group_cilium" {
+resource "yandex_kubernetes_node_group" "k8s_node_group_cilium_app" {
   cluster_id = yandex_kubernetes_cluster.cilium-app.id
   name       = "node-group-cilium-app"
   version    = "1.33"
