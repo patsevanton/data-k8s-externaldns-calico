@@ -52,7 +52,7 @@ resource "yandex_kubernetes_node_group" "k8s_node_group_cilium_redis" {
 
   scale_policy {
     fixed_scale {
-      size = 1
+      size = 3  # Фиксированное количество нод
     }
   }
 
