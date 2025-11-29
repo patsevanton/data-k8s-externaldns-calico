@@ -38,3 +38,4 @@ terraform.rc
 .terraform.lock.hcl
 externaldns/key.json
 terraform/key.json
+vault-values.yaml

@@ -16,11 +16,122 @@
 terraform apply -auto-approve
 yc managed-kubernetes cluster get-credentials --id id-кластера-k8s --external --force
 ```
+# Настройка маршрутизации трафика на Redis кластеры через TLSRoute с терминацией TLS в Contour
 
-## Часть 2: Установка Redis оператора и standalone Redis
+## Введение
 
-Был выбран **ot-container-kit/redis-operator**, потому что он предоставляет более широкие возможности по сравнению с **spotahome/redis-operator**: поддерживает все режимы Redis (Standalone, Cluster и Sentinel), а также современные функции, необходимые для безопасной и управляемой эксплуатации — TLS/SSL, ACL, резервное копирование и интеграцию с Grafana для мониторинга. Это делает его более гибким и удобным решением для production-сред, требующих масштабируемости, безопасности и наблюдаемости.
+В современных Kubernetes-окружениях безопасная маршрутизация трафика к различным сервисам является критически важной задачей. В этой статье мы рассмотрим, как настроить маршрутизацию TLS-трафика к нескольким Redis-кластерам с использованием **Gateway API TLSRoute** и контроллера **Contour** с режимом терминации TLS, когда Redis работает без TLS.
 
+## Архитектура решения
+
+### Компоненты системы
+
+- **Contour**: Ingress-контроллер, реализующий Gateway API
+- **Gateway API**: Современная спецификация для управления сетевым трафиком в Kubernetes
+- **TLSRoute**: Ресурс для маршрутизации TLS-трафика
+- **Redis**: Кластеры баз данных in-memory
+
+### Принцип работы
+
+Решение предусматривает терминацию TLS-соединения на уровне Contour с последующей передачей незашифрованного TCP-трафика к Redis-бэкендам. Это позволяет централизованно управлять сертификатами и снижает нагрузку на Redis-серверы.
+
+## Пошаговая реализация
+
+### 1. Установка Contour
+
+```bash
+# Добавление Helm-репозитория Contour
+helm repo add contour https://projectcontour.github.io/contour-helm-chart
+helm repo update
+
+# Установка Contour в namespace contour
+helm install contour contour/contour -n contour --create-namespace
+```
+
+```
+cat <<EOF > my-app-certificate.yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: redis1-certificate
+  namespace: apps
+spec:
+  secretName: redis1-tls-cert
+  issuerRef:
+    name: vault-cluster-issuer
+    kind: ClusterIssuer
+  duration: 720h
+  renewBefore: 360h
+  commonName: redis1.apatsev.corp
+  dnsNames:
+  - redis1.apatsev.corp
+EOF
+```
+
+```
+cat <<EOF > my-app-certificate.yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: redis2-certificate
+  namespace: apps
+spec:
+  secretName: redis2-tls-cert
+  issuerRef:
+    name: vault-cluster-issuer
+    kind: ClusterIssuer
+  duration: 720h
+  renewBefore: 360h
+  commonName: redis2.apatsev.corp
+  dnsNames:
+  - redis2.apatsev.corp
+EOF
+```
+
+### 2. Настройка GatewayClass и Gateway
+
+```bash
+cat <<EOF > gateway.yaml
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: contour
+spec:
+  controllerName: projectcontour.io/gateway-controller
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: redis-gateway
+  namespace: contour
+spec:
+  gatewayClassName: contour
+  listeners:
+    - name: redis-cluster-1
+      protocol: TLS
+      port: 443
+      hostname: "redis1.apatsev.corp"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: redis1-tls-cert
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: redis-cluster-2
+      protocol: TLS
+      port: 443
+      hostname: "redis2.apatsev.corp"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: redis2-tls-cert
+      allowedRoutes:
+        namespaces:
+          from: All
+EOF
+```
 
 ### 1. Установка Redis оператора через Helm (рекомендуемый способ)
 
@@ -31,14 +142,11 @@ helm repo add ot-helm https://ot-container-kit.github.io/helm-charts/
 
 #### Установка Redis оператора
 ```bash
-helm upgrade redis-operator ot-helm/redis-operator --install --create-namespace --namespace ot-operators --wait --version 0.22.2
+helm upgrade --install redis-operator ot-helm/redis-operator --create-namespace --namespace ot-operators --wait --version 0.22.2
 ```
 
 #### Проверка установки оператора
 ```bash
-# Проверить установленные CRDs
-kubectl get crds | grep redis.opstreelabs.in
-
 # Проверить поды Redis оператора
 kubectl get pods -n ot-operators | grep redis
 ```
@@ -86,81 +194,49 @@ kubectl apply -f redis-standalone/redis-standalone.yaml
 kubectl get pods -n redis-standalone-ns
 ```
 
-**Ожидаемый результат:**
 
-```
-NAME                 READY   STATUS    RESTARTS   AGE
-redis-standalone-0   1/1     Running   0          4m23s
-```
+### 5. Конфигурация TLSRoute
 
-### Проверка сервисов Redis
-
-```bash
-kubectl get svc -n redis-standalone-ns
-```
-
-**Ожидаемый результат:**
-
-```
-NAME                          TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
-redis-standalone              ClusterIP   10.96.155.226   <none>        6379/TCP   4m27s
-redis-standalone-additional   ClusterIP   10.96.153.7     <none>        6379/TCP   4m27s
-redis-standalone-headless     ClusterIP   None            <none>        6379/TCP   4m27s
-```
-
-## 3. Тестирование внешнего Redis standalone из cilium k8s кластера
-
-### Подключение к Redis и запись 10 ключей
-
-```bash
-kubectl run redis-client --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
-redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 SET key1 'value1' &&
-redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 SET key2 'value2' &&
-redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 SET key3 'value3' &&
-redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 SET key4 'value4' &&
-redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 SET key5 'value5' &&
-redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 SET key6 'value6' &&
-redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 SET key7 'value7' &&
-redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 SET key8 'value8' &&
-redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 SET key9 'value9' &&
-redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 SET key10 'value10'
-"
+```yaml
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: redis-cluster-1-route
+  namespace: redis
+spec:
+  parentRefs:
+    - name: redis-gateway
+      namespace: contour
+      sectionName: redis-cluster-1
+  hostnames:
+    - "redis1.apatsev.corp"
+  rules:
+    - backendRefs:
+        - name: redis-cluster-1
+          port: 6379
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: redis-cluster-2-route
+  namespace: redis
+spec:
+  parentRefs:
+    - name: redis-gateway
+      namespace: contour
+      sectionName: redis-cluster-2
+  hostnames:
+    - "redis2.apatsev.corp"
+  rules:
+    - backendRefs:
+        - name: redis-cluster-2
+          port: 6379
 ```
 
-### Проверка наличия ключей
+## 4. Проверка доступности redis1.apatsev.corp
 
 ```bash
 kubectl run redis-client --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
-redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 KEYS '*'
+redis-cli -h redis1.apatsev.corp -p 6379 PING
 "
-```
-
-### Проверка количества ключей
-
-```bash
-kubectl run redis-client --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
-redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 DBSIZE
-"
-```
-
-### Безопасный перебор ключей
-
-```bash
-kubectl run redis-client --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
-redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 SCAN 0 COUNT 1000
-"
-```
-
-## 4. (Необязательно) Проверка доступности Redis
-
-```bash
-kubectl run redis-client --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
-redis-cli -h redis-standalone.data.k8s.mycompany.corp -p 6379 PING
-"
-```
-
-**Ожидаемый ответ:**
-
-```
-PONG
 ```
