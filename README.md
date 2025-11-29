@@ -76,6 +76,38 @@ kubectl get pods -n ot-operators | grep redis
 
 ## 2. Установка standalone Redis через YAML-манифест
 
+```bash
+cat <<EOF > redis-standalone/redis-standalone.yaml
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: redis-standalone-ns
+---
+apiVersion: redis.redis.opstreelabs.in/v1beta2
+kind: Redis
+metadata:
+  name: redis-standalone
+  namespace: redis-standalone-ns
+  annotations:
+    external-dns.alpha.kubernetes.io/internal-hostname: redis-standalone.data.k8s.mycompany.corp
+    external-dns.alpha.kubernetes.io/ttl: "60"
+spec:
+  podSecurityContext:
+    runAsUser: 1000
+    fsGroup: 1000
+  kubernetesConfig:
+    image: quay.io/opstree/redis:v7.0.12
+  storage:
+    volumeClaimTemplate:
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+EOF
+```
+
 ### Применение манифеста
 
 ```bash

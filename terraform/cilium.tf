@@ -1,9 +1,9 @@
-resource "yandex_kubernetes_cluster" "cilium" {
-  name       = "cilium"
+resource "yandex_kubernetes_cluster" "cilium-app" {
+  name       = "cilium-app"
   network_id = yandex_vpc_network.k8s-network.id
 
   master {
-    version = "1.31"
+    version = "1.33"
     zonal {
       zone      = yandex_vpc_subnet.k8s-subnet.zone
       subnet_id = yandex_vpc_subnet.k8s-subnet.id
@@ -14,8 +14,7 @@ resource "yandex_kubernetes_cluster" "cilium" {
 
   service_account_id      = yandex_iam_service_account.sa-k8s-admin.id
   node_service_account_id = yandex_iam_service_account.sa-k8s-admin.id
-  release_channel         = "STABLE"
-  network_policy_provider = "CALICO"
+  release_channel         = "RAPID"
   cluster_ipv4_range      = "10.113.0.0/16"
   service_ipv4_range      = "10.97.0.0/16"
 
@@ -23,9 +22,9 @@ resource "yandex_kubernetes_cluster" "cilium" {
 }
 
 resource "yandex_kubernetes_node_group" "k8s_node_group_cilium" {
-  cluster_id = yandex_kubernetes_cluster.cilium.id
-  name       = "node-group-cilium"
-  version    = "1.31"
+  cluster_id = yandex_kubernetes_cluster.cilium-app.id
+  name       = "node-group-cilium-app"
+  version    = "1.33"
 
   instance_template {
     platform_id = "standard-v3"
