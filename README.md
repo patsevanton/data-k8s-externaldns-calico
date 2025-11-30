@@ -46,47 +46,6 @@ helm repo update
 
 # Установка Contour в namespace contour
 helm install contour contour/contour --namespace contour --create-namespace
-
-```
-
-```
-cat <<EOF > my-app-certificate.yaml
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: redis1-certificate
-  namespace: apps
-spec:
-  secretName: redis1-tls-cert
-  issuerRef:
-    name: vault-cluster-issuer
-    kind: ClusterIssuer
-  duration: 720h
-  renewBefore: 360h
-  commonName: redis1.apatsev.corp
-  dnsNames:
-  - redis1.apatsev.corp
-EOF
-```
-
-```
-cat <<EOF > my-app-certificate.yaml
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: redis2-certificate
-  namespace: apps
-spec:
-  secretName: redis2-tls-cert
-  issuerRef:
-    name: vault-cluster-issuer
-    kind: ClusterIssuer
-  duration: 720h
-  renewBefore: 360h
-  commonName: redis2.apatsev.corp
-  dnsNames:
-  - redis2.apatsev.corp
-EOF
 ```
 
 ### 2. Настройка GatewayClass и Gateway
@@ -195,6 +154,47 @@ kubectl apply -f redis-standalone/redis-standalone.yaml
 kubectl get pods -n redis-standalone-ns
 ```
 
+
+# Создание сертификатов redis
+```
+cat <<EOF > my-app-certificate.yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: redis1-certificate
+  namespace: apps
+spec:
+  secretName: redis1-tls-cert
+  issuerRef:
+    name: vault-cluster-issuer
+    kind: ClusterIssuer
+  duration: 720h
+  renewBefore: 360h
+  commonName: redis1.apatsev.corp
+  dnsNames:
+  - redis1.apatsev.corp
+EOF
+```
+
+```
+cat <<EOF > my-app-certificate.yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: redis2-certificate
+  namespace: apps
+spec:
+  secretName: redis2-tls-cert
+  issuerRef:
+    name: vault-cluster-issuer
+    kind: ClusterIssuer
+  duration: 720h
+  renewBefore: 360h
+  commonName: redis2.apatsev.corp
+  dnsNames:
+  - redis2.apatsev.corp
+EOF
+```
 
 ### 5. Конфигурация TLSRoute
 
