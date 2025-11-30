@@ -38,83 +38,6 @@ yc managed-kubernetes cluster get-credentials --id id-кластера-k8s --ext
 ## Пошаговая реализация
 
 
-### 1. Установка Contour
-
-```bash
-# Добавление Helm-репозитория Contour
-helm repo add contour https://projectcontour.github.io/helm-charts/
-helm repo update
-```
-
-**Просмотр default значений чарта contour**
-Экспортируйте значения по умолчанию чарта Vault в файл default-values.yaml:
-```bash
-helm show values oci://docker.io/envoyproxy/gateway-helm --version v1.6.0 > default-values.yaml
-```
-
-Удаляем ключи с пустыми значениями
-```bash
-yq -i 'del(.. | select( length == 0))'  default-values.yaml
-sed -i '/{}/d' default-values.yaml
-```
-
-### Установка Contour в namespace contour
-```bash
-helm upgrade --install contour contour/contour --namespace contour --wait --create-namespace -f contour-values.yaml
-```
-
-### 2. Настройка GatewayClass и Gateway
-
-```bash
-cat <<EOF > gateway.yaml
-apiVersion: gateway.networking.k8s.io/v1
-kind: GatewayClass
-metadata:
-  name: contour
-spec:
-  controllerName: projectcontour.io/gateway-controller
-EOF
-```
-
-```
-k apply -f gateway.yaml
-```
-
-Установка Gateway
-```bash
-apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
-metadata:
-  name: redis-gateway
-  namespace: contour
-spec:
-  gatewayClassName: contour
-  listeners:
-    - name: redis-cluster-1
-      protocol: TLS
-      port: 443
-      hostname: "redis1.apatsev.corp"
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - name: redis1-tls-cert
-      allowedRoutes:
-        namespaces:
-          from: All
-    - name: redis-cluster-2
-      protocol: TLS
-      port: 443
-      hostname: "redis2.apatsev.corp"
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - name: redis2-tls-cert
-      allowedRoutes:
-        namespaces:
-          from: All
-EOF
-```
-
 ### 1. Установка Redis оператора через Helm (рекомендуемый способ)
 
 #### Добавление репозитория Helm
@@ -175,6 +98,76 @@ kubectl apply -f redis-standalone/redis-standalone.yaml
 ```bash
 kubectl get pods -n redis-standalone-ns
 ```
+
+### 1. Установка envoy-gateway
+
+Установка происходит через terraform c указанием IP LoadBalancer
+
+**Просмотр default значений чарта envoy-gateway**
+Экспортируйте значения по умолчанию чарта Vault в файл default-values.yaml:
+```bash
+helm show values oci://docker.io/envoyproxy/gateway-helm --version v1.6.0 > default-values.yaml
+```
+
+Удаляем ключи с пустыми значениями
+```bash
+yq -i 'del(.. | select( length == 0))'  default-values.yaml
+sed -i '/{}/d' default-values.yaml
+```
+
+### 2. Настройка GatewayClass и Gateway
+
+```bash
+cat <<EOF > gateway.yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: envoy
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+EOF
+```
+
+```
+k apply -f gateway.yaml
+```
+
+Установка Gateway
+```bash
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: redis-gateway
+  namespace: contour
+spec:
+  gatewayClassName: envoy
+  listeners:
+    - name: redis-cluster-1
+      protocol: TLS
+      port: 443
+      hostname: "redis1.apatsev.corp"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: redis1-tls-cert
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: redis-cluster-2
+      protocol: TLS
+      port: 443
+      hostname: "redis2.apatsev.corp"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: redis2-tls-cert
+      allowedRoutes:
+        namespaces:
+          from: All
+EOF
+```
+
+
 
 
 # Создание сертификатов redis
