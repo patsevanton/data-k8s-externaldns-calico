@@ -86,7 +86,7 @@ resource "helm_release" "ingress_nginx" {
   version          = "4.10.6"
   namespace        = "ingress-nginx"
   create_namespace = true
-  depends_on       = [yandex_kubernetes_cluster.cilium-redis]
+  depends_on       = [yandex_kubernetes_node_group.k8s_node_group_cilium_redis]
 
   set {
     name  = "controller.service.loadBalancerIP"
