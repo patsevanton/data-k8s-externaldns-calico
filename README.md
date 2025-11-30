@@ -41,11 +41,12 @@ yc managed-kubernetes cluster get-credentials --id id-кластера-k8s --ext
 
 ```bash
 # Добавление Helm-репозитория Contour
-helm repo add contour https://projectcontour.github.io/contour-helm-chart
+helm repo add contour https://projectcontour.github.io/helm-charts/
 helm repo update
 
 # Установка Contour в namespace contour
-helm install contour contour/contour -n contour --create-namespace
+helm install contour contour/contour --namespace contour --create-namespace
+
 ```
 
 ```
