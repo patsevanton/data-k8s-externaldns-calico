@@ -90,6 +90,10 @@ resource "helm_release" "contour" {
     {
       name  = "contour.service.loadBalancerIP"
       value = yandex_vpc_address.addr.external_ipv4_address[0].address  # Присвоение внешнего IP балансировщику
+    },
+    {
+      name  = "gatewayAPI.manageCRDs"
+      value = true
     }
   ]
 }
