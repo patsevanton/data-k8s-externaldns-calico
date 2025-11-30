@@ -67,8 +67,8 @@ resource "yandex_kubernetes_node_group" "k8s_node_group_cilium_redis" {
 # Настройка провайдера Helm для установки чарта в Kubernetes
 provider "helm" {
   kubernetes {
-    host                   = yandex_kubernetes_cluster.sentry.master[0].external_v4_endpoint  # Адрес API Kubernetes
-    cluster_ca_certificate = yandex_kubernetes_cluster.sentry.master[0].cluster_ca_certificate  # CA-сертификат
+    host                   = yandex_kubernetes_cluster.cilium-redis.master[0].external_v4_endpoint  # Адрес API Kubernetes
+    cluster_ca_certificate = yandex_kubernetes_cluster.cilium-redis.master[0].cluster_ca_certificate  # CA-сертификат
 
     exec {
       api_version = "client.authentication.k8s.io/v1beta1"
@@ -86,7 +86,7 @@ resource "helm_release" "ingress_nginx" {
   version          = "4.10.6"
   namespace        = "ingress-nginx"
   create_namespace = true
-  depends_on       = [yandex_kubernetes_cluster.sentry]
+  depends_on       = [yandex_kubernetes_cluster.cilium-redis]
 
   set {
     name  = "controller.service.loadBalancerIP"
