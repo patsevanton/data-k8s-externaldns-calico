@@ -16,24 +16,24 @@
 terraform apply -auto-approve
 yc managed-kubernetes cluster get-credentials --id id-кластера-k8s --external --force
 ```
-# Настройка маршрутизации трафика на Redis кластеры через TLSRoute с терминацией TLS в Contour
+# Настройка маршрутизации трафика на Redis кластеры через TLSRoute с терминацией TLS в envoy-gateway
 
 ## Введение
 
-В современных Kubernetes-окружениях безопасная маршрутизация трафика к различным сервисам является критически важной задачей. В этой статье мы рассмотрим, как настроить маршрутизацию TLS-трафика к нескольким Redis-кластерам с использованием **Gateway API TLSRoute** и контроллера **Contour** с режимом терминации TLS, когда Redis работает без TLS.
+В современных Kubernetes-окружениях безопасная маршрутизация трафика к различным сервисам является критически важной задачей. В этой статье мы рассмотрим, как настроить маршрутизацию TLS-трафика к нескольким Redis-кластерам с использованием **Gateway API TLSRoute** и контроллера **envoy-gateway** с режимом терминации TLS, когда Redis работает без TLS.
 
 ## Архитектура решения
 
 ### Компоненты системы
 
-- **Contour**: Ingress-контроллер, реализующий Gateway API
+- **envoy-gateway**: Ingress-контроллер, реализующий Gateway API
 - **Gateway API**: Современная спецификация для управления сетевым трафиком в Kubernetes
 - **TLSRoute**: Ресурс для маршрутизации TLS-трафика
 - **Redis**: Кластеры баз данных in-memory
 
 ### Принцип работы
 
-Решение предусматривает терминацию TLS-соединения на уровне Contour с последующей передачей незашифрованного TCP-трафика к Redis-бэкендам. Это позволяет централизованно управлять сертификатами и снижает нагрузку на Redis-серверы.
+Решение предусматривает терминацию TLS-соединения на уровне envoy-gateway с последующей передачей незашифрованного TCP-трафика к Redis-бэкендам. Это позволяет централизованно управлять сертификатами и снижает нагрузку на Redis-серверы.
 
 ## Пошаговая реализация
 
@@ -115,10 +115,49 @@ yq -i 'del(.. | select( length == 0))'  default-values.yaml
 sed -i '/{}/d' default-values.yaml
 ```
 
+
+### 5. Конфигурация TLSRoute
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: redis-cluster-1-route
+  namespace: redis
+spec:
+  parentRefs:
+    - name: redis-gateway
+      namespace: envoy-gateway
+      sectionName: redis-cluster-1
+  hostnames:
+    - "redis1.apatsev.corp"
+  rules:
+    - backendRefs:
+        - name: redis-cluster-1
+          port: 6379
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: redis-cluster-2-route
+  namespace: redis
+spec:
+  parentRefs:
+    - name: redis-gateway
+      namespace: envoy-gateway
+      sectionName: redis-cluster-2
+  hostnames:
+    - "redis2.apatsev.corp"
+  rules:
+    - backendRefs:
+        - name: redis-cluster-2
+          port: 6379
+```
+
 ### 2. Настройка GatewayClass и Gateway
 
 ```bash
-cat <<EOF > gateway.yaml
+cat <<EOF > gatewayclass.yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
@@ -129,7 +168,7 @@ EOF
 ```
 
 ```
-k apply -f gateway.yaml
+k apply -f gatewayclass.yaml
 ```
 
 Установка Gateway
@@ -138,7 +177,7 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: redis-gateway
-  namespace: contour
+  namespace: envoy-gateway
 spec:
   gatewayClassName: envoy
   listeners:
@@ -169,7 +208,18 @@ EOF
 
 
 
+## 4. Проверка доступности redis1.apatsev.corp
 
+```bash
+kubectl run redis-client --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
+redis-cli -h redis1.apatsev.corp -p 6379 PING
+"
+```
+
+
+
+
+### если не получится создать серты redis
 # Создание сертификатов redis
 ```
 cat <<EOF > my-app-certificate.yaml
@@ -209,50 +259,4 @@ spec:
   dnsNames:
   - redis2.apatsev.corp
 EOF
-```
-
-### 5. Конфигурация TLSRoute
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1alpha2
-kind: TLSRoute
-metadata:
-  name: redis-cluster-1-route
-  namespace: redis
-spec:
-  parentRefs:
-    - name: redis-gateway
-      namespace: contour
-      sectionName: redis-cluster-1
-  hostnames:
-    - "redis1.apatsev.corp"
-  rules:
-    - backendRefs:
-        - name: redis-cluster-1
-          port: 6379
----
-apiVersion: gateway.networking.k8s.io/v1alpha2
-kind: TLSRoute
-metadata:
-  name: redis-cluster-2-route
-  namespace: redis
-spec:
-  parentRefs:
-    - name: redis-gateway
-      namespace: contour
-      sectionName: redis-cluster-2
-  hostnames:
-    - "redis2.apatsev.corp"
-  rules:
-    - backendRefs:
-        - name: redis-cluster-2
-          port: 6379
-```
-
-## 4. Проверка доступности redis1.apatsev.corp
-
-```bash
-kubectl run redis-client --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
-redis-cli -h redis1.apatsev.corp -p 6379 PING
-"
 ```
