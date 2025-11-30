@@ -37,14 +37,29 @@ yc managed-kubernetes cluster get-credentials --id id-кластера-k8s --ext
 
 ## Пошаговая реализация
 
+
 ### 1. Установка Contour
 
 ```bash
 # Добавление Helm-репозитория Contour
 helm repo add contour https://projectcontour.github.io/helm-charts/
 helm repo update
+```
 
-# Установка Contour в namespace contour
+**Просмотр default значений чарта contour**
+Экспортируйте значения по умолчанию чарта Vault в файл default-values.yaml:
+```bash
+helm show values contour/contour | sed -e '/^\s*#/d' -e 's/\s*#.*$//' -e '/^\s*$/d' > default-values.yaml
+```
+
+Удаляем ключи с пустыми значениями
+```bash
+yq -i 'del(.. | select( length == 0))'  default-values.yaml
+sed -i '/{}/d' default-values.yaml
+```
+
+### Установка Contour в namespace contour
+```bash
 helm install contour contour/contour --namespace contour --create-namespace
 ```
 
