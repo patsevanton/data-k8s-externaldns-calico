@@ -62,3 +62,8 @@ resource "yandex_kubernetes_node_group" "k8s_node_group_cilium_app" {
     }
   }
 }
+
+output "get_credentials_command_cilium_app" {
+  description = "Command to get kubeconfig for the Cilium App cluster"
+  value       = "yc managed-kubernetes cluster get-credentials --id ${yandex_kubernetes_cluster.cilium-app.id} --external --force"
+}
