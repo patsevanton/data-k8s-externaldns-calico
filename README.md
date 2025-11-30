@@ -49,7 +49,7 @@ helm repo update
 **Просмотр default значений чарта contour**
 Экспортируйте значения по умолчанию чарта Vault в файл default-values.yaml:
 ```bash
-helm show values contour/contour | sed -e '/^\s*#/d' -e 's/\s*#.*$//' -e '/^\s*$/d' > default-values.yaml
+helm show values oci://docker.io/envoyproxy/gateway-helm --version v1.6.0 > default-values.yaml
 ```
 
 Удаляем ключи с пустыми значениями
@@ -60,21 +60,28 @@ sed -i '/{}/d' default-values.yaml
 
 ### Установка Contour в namespace contour
 ```bash
-helm install contour contour/contour --namespace contour --create-namespace
+helm upgrade --install contour contour/contour --namespace contour --wait --create-namespace -f contour-values.yaml
 ```
 
 ### 2. Настройка GatewayClass и Gateway
 
 ```bash
 cat <<EOF > gateway.yaml
----
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
   name: contour
 spec:
   controllerName: projectcontour.io/gateway-controller
----
+EOF
+```
+
+```
+k apply -f gateway.yaml
+```
+
+Установка Gateway
+```bash
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:

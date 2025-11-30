@@ -52,7 +52,7 @@ resource "yandex_kubernetes_node_group" "k8s_node_group_cilium_redis" {
 
   scale_policy {
     fixed_scale {
-      size = 3  # Фиксированное количество нод
+      size = 3 # Фиксированное количество нод
     }
   }
 
@@ -77,23 +77,20 @@ provider "helm" {
   }
 }
 
-# Установка Contour через Helm (соответствует командам helm repo add contour https://projectcontour.github.io/helm-charts/, helm repo update, helm install contour contour/contour ...)
-resource "helm_release" "contour" {
-  name             = "contour"
-  repository       = "https://projectcontour.github.io/helm-charts/"
-  chart            = "contour"
-  namespace        = "contour"
+# Установка Envoy Gateway через Helm (соответствует команде helm install envoy-gateway oci://docker.io/envoyproxy/gateway-helm --version v1.6.0 -n envoy-gateway --create-namespace --set service.loadBalancerIP=ip-из-terraform)
+resource "helm_release" "envoy_gateway" {
+  name             = "envoy-gateway"
+  repository       = "oci://docker.io/envoyproxy/gateway-helm"
+  chart            = "gateway-helm"
+  version          = "v1.6.0"
+  namespace        = "envoy-gateway"
   create_namespace = true
   depends_on       = [yandex_kubernetes_node_group.k8s_node_group_cilium_redis]
 
   set = [
     {
-      name  = "contour.service.loadBalancerIP"
-      value = yandex_vpc_address.addr.external_ipv4_address[0].address  # Присвоение внешнего IP балансировщику
-    },
-    {
-      name  = "gatewayAPI.manageCRDs"
-      value = true
+      name  = "service.loadBalancerIP"
+      value = yandex_vpc_address.addr.external_ipv4_address[0].address # Присвоение внешнего IP балансировщику
     }
   ]
 }
