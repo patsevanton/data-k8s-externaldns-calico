@@ -78,26 +78,26 @@ provider "helm" {
 }
 
 # Установка Envoy Gateway через Helm (соответствует команде helm install envoy-gateway oci://docker.io/envoyproxy/gateway-helm ...)
-# resource "helm_release" "envoy_gateway" {
-#   name             = "envoy-gateway"
-#   repository       = "oci://docker.io/envoyproxy/gateway-helm"
-#   chart            = "gateway-helm"
-#   version          = "v1.6.0"
-#   namespace        = "envoy-gateway"
-#   create_namespace = true
-#   depends_on       = [yandex_kubernetes_node_group.k8s_node_group_cilium_redis]
+resource "helm_release" "envoy_gateway" {
+  name             = "envoy-gateway"
+  repository       = "oci://docker.io/envoyproxy"
+  chart            = "gateway-helm"
+  version          = "v1.6.0"
+  namespace        = "envoy-gateway"
+  create_namespace = true
+  depends_on       = [yandex_kubernetes_node_group.k8s_node_group_cilium_redis]
 
-#   set = [
-#     {
-#       name  = "service.type"
-#       value = "LoadBalancer"
-#     },
-#     {
-#       name  = "service.loadBalancerIP"
-#       value = yandex_vpc_address.addr.external_ipv4_address[0].address  # Присвоение внешнего IP балансировщику
-#     }
-#   ]
-# }
+  set = [
+    {
+      name  = "service.type"
+      value = "LoadBalancer"
+    },
+    {
+      name  = "service.loadBalancerIP"
+      value = yandex_vpc_address.addr.external_ipv4_address[0].address  # Присвоение внешнего IP балансировщику
+    }
+  ]
+}
 
 output "get_credentials_command_cilium_redis" {
   description = "Command to get kubeconfig for the Cilium Redis cluster"
