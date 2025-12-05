@@ -59,7 +59,7 @@ kubectl get pods -n ot-operators | grep redis
 ## 2. Установка standalone Redis через YAML-манифест
 
 ```bash
-cat <<EOF > redis-standalone/redis-standalone.yaml
+cat <<EOF > redis-standalone.yaml
 ---
 apiVersion: v1
 kind: Namespace
@@ -69,7 +69,26 @@ metadata:
 apiVersion: redis.redis.opstreelabs.in/v1beta2
 kind: Redis
 metadata:
-  name: redis-standalone
+  name: redis-standalone1
+  namespace: redis-standalone
+spec:
+  podSecurityContext:
+    runAsUser: 1000
+    fsGroup: 1000
+  kubernetesConfig:
+    image: quay.io/opstree/redis:v7.0.12
+  storage:
+    volumeClaimTemplate:
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: redis.redis.opstreelabs.in/v1beta2
+kind: Redis
+metadata:
+  name: redis-standalone2
   namespace: redis-standalone
 spec:
   podSecurityContext:
@@ -90,7 +109,7 @@ EOF
 ### Применение манифеста
 
 ```bash
-kubectl apply -f redis-standalone/redis-standalone.yaml
+kubectl apply -f redis-standalone.yaml
 ```
 
 ### Проверка подов Redis
@@ -146,7 +165,13 @@ sed -i '/{}/d' default-values.yaml
 
 ## Установка cert-manager
 ```
-helm upgrade --install cert-manager oci://quay.io/jetstack/charts/cert-manager --namespace cert-manager \
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+helm upgrade --install --wait cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --version v1.18.2 \
+  --set crds.enabled=true \
   --set config.apiVersion="controller.config.cert-manager.io/v1alpha1" \
   --set config.kind="ControllerConfiguration" \
   --set config.enableGatewayAPI=true
@@ -155,12 +180,12 @@ helm upgrade --install cert-manager oci://quay.io/jetstack/charts/cert-manager -
 
 # Создание сертификатов redis
 ```
-cat <<EOF > my-app-certificate.yaml
+cat <<EOF > redis1-certificate.yaml
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: redis1-certificate
-  namespace: apps
+  namespace: redis-standalone
 spec:
   secretName: redis1-tls-cert
   issuerRef:
@@ -174,13 +199,19 @@ spec:
 EOF
 ```
 
+Применение
 ```
-cat <<EOF > my-app-certificate.yaml
+kubectl apply -f redis1-certificate.yaml
+```
+
+Создаем второй сертификат
+```
+cat <<EOF > redis2-certificate.yaml
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: redis2-certificate
-  namespace: apps
+  namespace: redis-standalone
 spec:
   secretName: redis2-tls-cert
   issuerRef:
@@ -194,6 +225,11 @@ spec:
 EOF
 ```
 
+Применение
+```
+kubectl apply -f redis2-certificate.yaml
+```
+
 ### 5. Конфигурация TLSRoute
 
 ```yaml
@@ -203,7 +239,7 @@ metadata:
   name: redis-cluster-1-route
   namespace: redis
   annotations:
-    cert-manager.io/issuer: foo
+    cert-manager.io/cluster-issuer: vault-cluster-issuer
 spec:
   parentRefs:
     - name: redis-gateway
@@ -222,7 +258,7 @@ metadata:
   name: redis-cluster-2-route
   namespace: redis
   annotations:
-    cert-manager.io/issuer: foo
+    cert-manager.io/cluster-issuer: vault-cluster-issuer
 spec:
   parentRefs:
     - name: redis-gateway
@@ -287,8 +323,6 @@ spec:
           from: All
 EOF
 ```
-
-
 
 ## 4. Проверка доступности redis1.apatsev.corp
 

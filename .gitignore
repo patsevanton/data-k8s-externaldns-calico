@@ -48,3 +48,9 @@ intermediateCA.cnf
 rootCA.srl
 intermediateCA.crt
 intermediateCA.csr
+full-chain.crt
+my-app-certificate.yaml
+redis-standalone.yaml
+redis1-certificate.yaml
+redis2-certificate.yaml
+redis-standalone/redis-standalone.yaml
