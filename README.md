@@ -142,7 +142,7 @@ sed -i '/{}/d' default-values.yaml
 
 
 ## Установка Certificate Autority на базе HashiCorp Vault
-Устанавливаем Certificate Autority согласно инструкции https://habr.com/ru/articles/971494/
+Устанавливаем Certificate Autority согласно инструкции https://habr.com/ru/articles/971494/ с учетом при установке cert-manager нужно активировать флаги GatewayAPI.
 
 ## Установка cert-manager
 ```
