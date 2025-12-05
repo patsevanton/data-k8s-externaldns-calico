@@ -39,3 +39,12 @@ terraform.rc
 externaldns/key.json
 terraform/key.json
 vault-values.yaml
+vault-init-keys.json
+rootCA.key
+rootCA.crt
+rootCA.cnf
+intermediateCA.key
+intermediateCA.cnf
+rootCA.srl
+intermediateCA.crt
+intermediateCA.csr
