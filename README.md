@@ -101,7 +101,32 @@ kubectl get pods -n redis-standalone
 
 ### 1. Установка envoy-gateway
 
-Установка происходит через terraform c указанием IP LoadBalancer
+Установка происходит через terraform c указанием IP LoadBalancer. 
+
+Код terraform:
+```
+# Установка Envoy Gateway через Helm (соответствует команде helm install envoy-gateway oci://docker.io/envoyproxy/gateway-helm ...)
+resource "helm_release" "envoy_gateway" {
+  name             = "envoy-gateway"
+  repository       = "oci://docker.io/envoyproxy"
+  chart            = "gateway-helm"
+  version          = "v1.6.0"
+  namespace        = "envoy-gateway"
+  create_namespace = true
+  depends_on       = [yandex_kubernetes_node_group.k8s_node_group_cilium_redis]
+
+  set = [
+    {
+      name  = "service.type"
+      value = "LoadBalancer"
+    },
+    {
+      name  = "service.loadBalancerIP"
+      value = yandex_vpc_address.addr.external_ipv4_address[0].address  # Присвоение внешнего IP балансировщику
+    }
+  ]
+}
+```
 
 **Просмотр default значений чарта envoy-gateway**
 Экспортируйте значения по умолчанию чарта Vault в файл default-values.yaml:
