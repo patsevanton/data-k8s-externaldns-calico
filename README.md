@@ -141,6 +141,8 @@ sed -i '/{}/d' default-values.yaml
 ```
 
 
+## Установка Certificate Autority на базе HashiCorp Vault
+
 ## Установка cert-manager
 ```
 helm upgrade --install cert-manager oci://quay.io/jetstack/charts/cert-manager --namespace cert-manager \
