@@ -141,6 +141,56 @@ sed -i '/{}/d' default-values.yaml
 ```
 
 
+## Установка cert-manager
+```
+helm upgrade --install cert-manager oci://quay.io/jetstack/charts/cert-manager --namespace cert-manager \
+  --set config.apiVersion="controller.config.cert-manager.io/v1alpha1" \
+  --set config.kind="ControllerConfiguration" \
+  --set config.enableGatewayAPI=true
+```
+
+
+# Создание сертификатов redis
+```
+cat <<EOF > my-app-certificate.yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: redis1-certificate
+  namespace: apps
+spec:
+  secretName: redis1-tls-cert
+  issuerRef:
+    name: vault-cluster-issuer
+    kind: ClusterIssuer
+  duration: 720h
+  renewBefore: 360h
+  commonName: redis1.apatsev.corp
+  dnsNames:
+  - redis1.apatsev.corp
+EOF
+```
+
+```
+cat <<EOF > my-app-certificate.yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: redis2-certificate
+  namespace: apps
+spec:
+  secretName: redis2-tls-cert
+  issuerRef:
+    name: vault-cluster-issuer
+    kind: ClusterIssuer
+  duration: 720h
+  renewBefore: 360h
+  commonName: redis2.apatsev.corp
+  dnsNames:
+  - redis2.apatsev.corp
+EOF
+```
+
 ### 5. Конфигурация TLSRoute
 
 ```yaml
@@ -149,6 +199,8 @@ kind: TLSRoute
 metadata:
   name: redis-cluster-1-route
   namespace: redis
+  annotations:
+    cert-manager.io/issuer: foo
 spec:
   parentRefs:
     - name: redis-gateway
@@ -166,6 +218,8 @@ kind: TLSRoute
 metadata:
   name: redis-cluster-2-route
   namespace: redis
+  annotations:
+    cert-manager.io/issuer: foo
 spec:
   parentRefs:
     - name: redis-gateway
@@ -241,47 +295,3 @@ redis-cli -h redis1.apatsev.corp -p 6379 PING
 "
 ```
 
-
-
-
-### если не получится создать серты redis
-# Создание сертификатов redis
-```
-cat <<EOF > my-app-certificate.yaml
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: redis1-certificate
-  namespace: apps
-spec:
-  secretName: redis1-tls-cert
-  issuerRef:
-    name: vault-cluster-issuer
-    kind: ClusterIssuer
-  duration: 720h
-  renewBefore: 360h
-  commonName: redis1.apatsev.corp
-  dnsNames:
-  - redis1.apatsev.corp
-EOF
-```
-
-```
-cat <<EOF > my-app-certificate.yaml
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: redis2-certificate
-  namespace: apps
-spec:
-  secretName: redis2-tls-cert
-  issuerRef:
-    name: vault-cluster-issuer
-    kind: ClusterIssuer
-  duration: 720h
-  renewBefore: 360h
-  commonName: redis2.apatsev.corp
-  dnsNames:
-  - redis2.apatsev.corp
-EOF
-```
