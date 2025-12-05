@@ -64,13 +64,13 @@ cat <<EOF > redis-standalone/redis-standalone.yaml
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: redis-standalone-ns
+  name: redis-standalone
 ---
 apiVersion: redis.redis.opstreelabs.in/v1beta2
 kind: Redis
 metadata:
   name: redis-standalone
-  namespace: redis-standalone-ns
+  namespace: redis-standalone
 spec:
   podSecurityContext:
     runAsUser: 1000
@@ -96,7 +96,7 @@ kubectl apply -f redis-standalone/redis-standalone.yaml
 ### Проверка подов Redis
 
 ```bash
-kubectl get pods -n redis-standalone-ns
+kubectl get pods -n redis-standalone
 ```
 
 ### 1. Установка envoy-gateway
