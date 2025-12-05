@@ -90,6 +90,8 @@ EOF
 ```bash
 kubectl apply -f redis-standalone.yaml
 kubectl get pods -n redis-standalone
+
+Redis-оператор автоматически создаёт Service-ресурсы `redis-standalone1` и `redis-standalone2`, которые открывают порт 6379. TLSRoute в дальнейшем будет ссылаться на эти сервисы, чтобы пробросить трафик от Envoy к каждому экземпляру.
 ```
 
 ## 4. Установка envoy-gateway
@@ -243,14 +245,14 @@ kubectl apply -f gateway.yaml
 ```
 
 ### TLSRoute
-Каждому хосту соответствует собственный TLSRoute с секцией `sectionName` и `backendRef` на соответствующий Redis.
+Каждому хосту соответствует собственный TLSRoute. Маршрут должен быть объявлен в том же пространстве имён, где расположены backend-сервисы (`redis-standalone`) и сертификаты. `sectionName` каждого `parentRef` должен совпадать с именем listener'а в Gateway, а `backendRefs` — ссылаться на сервис, который expose'ит порт 6379 для соответствующего Redis.
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TLSRoute
 metadata:
   name: redis-cluster-1-route
-  namespace: redis
+  namespace: redis-standalone
   annotations:
     cert-manager.io/cluster-issuer: vault-cluster-issuer
 spec:
@@ -262,14 +264,14 @@ spec:
     - "redis1.apatsev.corp"
   rules:
     - backendRefs:
-        - name: redis-cluster-1
+        - name: redis-standalone1
           port: 6379
 ---
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TLSRoute
 metadata:
   name: redis-cluster-2-route
-  namespace: redis
+  namespace: redis-standalone
   annotations:
     cert-manager.io/cluster-issuer: vault-cluster-issuer
 spec:
@@ -281,16 +283,18 @@ spec:
     - "redis2.apatsev.corp"
   rules:
     - backendRefs:
-        - name: redis-cluster-2
+        - name: redis-standalone2
           port: 6379
 ```
 
 ## 9. Проверка доступности
-Запускаем временный под и проверяем соединение с TLS-сервером:
+Для проверки TLS-соединения запускаем временный под и обращаемся к слушателю на порту 443 через TLS. Поскольку Envoy выполняет termination, клиент должен установить TLS-сессию и, при необходимости, доверить сертификату (для теста можно использовать `--insecure`).
 
 ```bash
 kubectl run redis-client --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
-redis-cli -h redis1.apatsev.corp -p 6379 PING
+redis-cli --tls --insecure -h redis1.apatsev.corp -p 443 PING
 "
 ```
+
+Повторите аналогичную проверку для `redis2.apatsev.corp`, чтобы убедиться, что оба TLSRoute работают корректно.
 
