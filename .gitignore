@@ -54,3 +54,4 @@ redis-standalone.yaml
 redis1-certificate.yaml
 redis2-certificate.yaml
 redis-standalone/redis-standalone.yaml
+default-values.yaml
