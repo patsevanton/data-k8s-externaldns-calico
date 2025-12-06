@@ -159,9 +159,9 @@ spec:
     kind: ClusterIssuer
   duration: 720h
   renewBefore: 360h
-  commonName: redis1.apatsev.corp
+  commonName: app1.redis.apatsev.corp
   dnsNames:
-  - redis1.apatsev.corp
+  - app1.redis.apatsev.corp
 EOF
 
 kubectl apply -f redis1-certificate.yaml
@@ -182,9 +182,9 @@ spec:
     kind: ClusterIssuer
   duration: 720h
   renewBefore: 360h
-  commonName: redis2.apatsev.corp
+  commonName: app2.redis.apatsev.corp
   dnsNames:
-  - redis2.apatsev.corp
+  - app2.redis.apatsev.corp
 EOF
 
 kubectl apply -f redis2-certificate.yaml
@@ -219,7 +219,7 @@ spec:
     - name: redis-cluster-1
       protocol: TLS
       port: 443
-      hostname: "redis1.apatsev.corp"
+      hostname: "app1.redis.apatsev.corp"
       tls:
         mode: Terminate
         certificateRefs:
@@ -230,7 +230,7 @@ spec:
     - name: redis-cluster-2
       protocol: TLS
       port: 443
-      hostname: "redis2.apatsev.corp"
+      hostname: "app2.redis.apatsev.corp"
       tls:
         mode: Terminate
         certificateRefs:
@@ -261,7 +261,7 @@ spec:
       namespace: envoy-gateway
       sectionName: redis-cluster-1
   hostnames:
-    - "redis1.apatsev.corp"
+    - "app1.redis.apatsev.corp"
   rules:
     - backendRefs:
         - name: redis-standalone1
@@ -280,7 +280,7 @@ spec:
       namespace: envoy-gateway
       sectionName: redis-cluster-2
   hostnames:
-    - "redis2.apatsev.corp"
+    - "app2.redis.apatsev.corp"
   rules:
     - backendRefs:
         - name: redis-standalone2
@@ -295,9 +295,9 @@ kubectl apply -f tlsroute.yaml
 
 ```bash
 kubectl run redis-client --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
-redis-cli --tls --insecure -h redis1.apatsev.corp -p 443 PING
+redis-cli --tls --insecure -h app1.redis.apatsev.corp -p 443 PING
 "
 ```
 
-Повторите аналогичную проверку для `redis2.apatsev.corp`, чтобы убедиться, что оба TLSRoute работают корректно.
+Повторите аналогичную проверку для `app2.redis.apatsev.corp`, чтобы убедиться, что оба TLSRoute работают корректно.
 
