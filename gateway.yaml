@@ -1,0 +1,30 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: redis-gateway
+  namespace: envoy-gateway
+spec:
+  gatewayClassName: envoy
+  listeners:
+    - name: redis-cluster-1
+      protocol: TLS
+      port: 443
+      hostname: "redis1.apatsev.corp"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: redis1-tls-cert
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: redis-cluster-2
+      protocol: TLS
+      port: 443
+      hostname: "redis2.apatsev.corp"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: redis2-tls-cert
+      allowedRoutes:
+        namespaces:
+          from: All
