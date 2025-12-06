@@ -10,7 +10,7 @@ resource "yandex_vpc_address" "addr_redis" {
 resource "yandex_dns_zone" "apatsev_corp_zone" {
   name   = "apatsev-corp"
   zone   = "apatsev.corp."
-  public = false
+  public = true
   private_networks = [yandex_vpc_network.k8s-network.id]
 }
 
