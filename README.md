@@ -246,7 +246,8 @@ kubectl apply -f gateway.yaml
 ### TLSRoute
 Каждому хосту соответствует собственный TLSRoute. Маршрут должен быть объявлен в том же пространстве имён, где расположены backend-сервисы (`redis-standalone`) и сертификаты. `sectionName` каждого `parentRef` должен совпадать с именем listener'а в Gateway, а `backendRefs` — ссылаться на сервис, который expose'ит порт 6379 для соответствующего Redis.
 
-```yaml
+```bash
+cat <<EOF > tlsroute.yaml
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TLSRoute
 metadata:
@@ -284,6 +285,9 @@ spec:
     - backendRefs:
         - name: redis-standalone2
           port: 6379
+EOF
+
+kubectl apply -f tlsroute.yaml
 ```
 
 ## 9. Проверка доступности
