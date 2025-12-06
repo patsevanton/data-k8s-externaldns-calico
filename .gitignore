@@ -57,3 +57,4 @@ redis-standalone/redis-standalone.yaml
 default-values.yaml
 gatewayclass.yaml
 tlsroute.yaml
+gateway.yaml

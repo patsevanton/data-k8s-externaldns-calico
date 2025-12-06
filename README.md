@@ -295,8 +295,7 @@ kubectl apply -f tlsroute.yaml
 
 ```bash
 kubectl run redis-client --rm -it --restart=Never --image=redis:alpine -- /bin/sh -c "
-redis-cli --tls --insecure -h app1.redis.apatsev.corp -p 443 PING
-"
+redis-cli --tls --insecure -h app1.redis.apatsev.corp -p 443 PING"
 ```
 
 Повторите аналогичную проверку для `app2.redis.apatsev.corp`, чтобы убедиться, что оба TLSRoute работают корректно.

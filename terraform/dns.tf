@@ -16,7 +16,7 @@ resource "yandex_dns_zone" "apatsev_corp_zone" {
 
 resource "yandex_dns_recordset" "redis_apatsev_corp" {
   zone_id = yandex_dns_zone.apatsev_corp_zone.id
-  name    = "redis.apatsev.corp."
+  name    = "*.redis.apatsev.corp."
   type    = "A"
   ttl     = 200
   data    = [yandex_vpc_address.addr_redis.external_ipv4_address[0].address]

@@ -9,7 +9,7 @@ spec:
     - name: redis-cluster-1
       protocol: TLS
       port: 443
-      hostname: "redis1.apatsev.corp"
+      hostname: "app1.redis.apatsev.corp"
       tls:
         mode: Terminate
         certificateRefs:
@@ -20,7 +20,7 @@ spec:
     - name: redis-cluster-2
       protocol: TLS
       port: 443
-      hostname: "redis2.apatsev.corp"
+      hostname: "app2.redis.apatsev.corp"
       tls:
         mode: Terminate
         certificateRefs:
