@@ -94,7 +94,7 @@ resource "helm_release" "envoy_gateway" {
     },
     {
       name  = "service.loadBalancerIP"
-      value = yandex_vpc_address.addr.external_ipv4_address[0].address  # Присвоение внешнего IP балансировщику
+      value = yandex_vpc_address.addr_redis.external_ipv4_address[0].address  # Присвоение внешнего IP балансировщику
     }
   ]
 }
