@@ -56,3 +56,4 @@ redis2-certificate.yaml
 redis-standalone/redis-standalone.yaml
 default-values.yaml
 gatewayclass.yaml
+tlsroute.yaml
