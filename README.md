@@ -87,11 +87,10 @@ EOF
 ```
 
 ### Применение манифеста
+Redis-оператор автоматически создаёт Service-ресурсы `redis-standalone1` и `redis-standalone2`, которые открывают порт 6379. TLSRoute в дальнейшем будет ссылаться на эти сервисы, чтобы пробросить трафик от Envoy к каждому экземпляру.
 ```bash
 kubectl apply -f redis-standalone.yaml
 kubectl get pods -n redis-standalone
-
-Redis-оператор автоматически создаёт Service-ресурсы `redis-standalone1` и `redis-standalone2`, которые открывают порт 6379. TLSRoute в дальнейшем будет ссылаться на эти сервисы, чтобы пробросить трафик от Envoy к каждому экземпляру.
 ```
 
 ## 4. Установка envoy-gateway
